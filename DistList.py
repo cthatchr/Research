@@ -39,3 +39,10 @@ class DistList:
     def printList(self):
         for x in range(len(self.distList)):
             print('Station: ' + self.distList[x].station.id, 'Distance: ' + str(self.distList[x].dist), 'Priority: ' + str(self.distList[x].priority))
+
+    def distlist_has_rr_user(self):
+        check = False
+        for x in self.distList:
+            if x.station.has_rr_user():
+               check = True
+        return check

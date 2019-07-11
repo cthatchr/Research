@@ -34,7 +34,7 @@ class Station:
     def print_coord(self):
         return self.id, self.lat, self.lon
 
-
+    # gets the difference of stock for the station, can get the absolute value as well
     def getdiff(self, absval=False):
         if absval == False:
             return self.target - self.curr - len(self.inc)
@@ -56,6 +56,23 @@ class Station:
                 else:
                     print(self.inc[y].id, end=' ')
 
+        print('Difference:', self.getdiff())
+        print('')
+
+    # returns true if there is a reroutable user
+    def has_rr_user(self):
+        check = False
+        for x in self.inc:
+            if x.rerouted is False:
+                check = True
+        return check
+
+    # returns the first reroutable user in the list
+    def get_rr_user(self):
+        for z in self.inc:
+            if z.rerouted is False:
+                return z
+
 
 # creates n amount of stations around a target coordinate
 def createStations(lat, lon, radius, amount, max=10):
@@ -72,5 +89,14 @@ def createStations(lat, lon, radius, amount, max=10):
         s.randstation(lat, lon, radius)
         stations.append(s)
     return stations
+
+# checks if ANY of the stations have a reroutable user, true if they do
+def stations_has_rr_user(stations):
+    check = False
+    for x in stations:
+        if x.has_rr_user():
+            check = True
+    return check
+
 
 

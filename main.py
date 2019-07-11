@@ -31,100 +31,63 @@ def run():
     # create users
     users = createUsers(stations, user_amount)
 
+    while True:
+        try:
+            k = int(input('How many users are we allowed to move?:'))
+            break
+        except:
+            print('Enter an integer.')
+
     # prints all information including incoming users for all stations
     for x in range(len(stations)):
         stations[x].display_info()
+    print('')
+
+    # get sum of stations difference in stock before Algorithm is run (get stats before)
+    sum_B = StationsDiff(stations)
+
+    # runs algorithm, rerouting a maximum of k users
+    distribute(stations, k)
+
+    # get sum of stations difference in stock after Algorithm (get stats after)
+    sum_A = StationsDiff(stations)
+
+    avg_B = sum_B / len(stations)
+    avg_A = sum_A / len(stations)
+
+    print('Before:')
+    print('Sum:', sum_B)
+    print("Average:", avg_B)
+    print('After:')
+    print('Sum:', sum_A)
+    print("Average:", avg_A)
+
+    before = {sum_B, avg_B}
+    after = (sum_A, avg_A)
+    createGraph(before, after)
 
 
 def createGraph(bef, aft):
-    n = 2
-    bar_width = 0.35
-    index = np.arange(n)
-    before = plt.bar(index, bef, bar_width, color='r',label='Before')
-    after = plt.bar(index + bar_width, aft, bar_width, color='g',label='After')
+    fig, ax = plt.subplots()
+    width = 0.35
+    index = np.arange(len(bef))
+    before = ax.bar(index - width/2, bef, width, color='r', label='Before', data=bef)
+    after = ax.bar(index + width/2, aft, width, color='g', label='After', data=aft)
 
-    plt.xlabel('Before/After Algorithm')
-    plt.ylabel('Stock Difference')
-    plt.title('Stock Difference Between Target and Current')
-    plt.xticks(index + bar_width, ('Sum', 'Average'))
-    plt.legend()
-    plt.tight_layout()
+    ax.set_xlabel('Before/After Algorithm')
+    ax.set_ylabel('Stock Difference')
+    ax.set_title('Stock Difference Between Target and Current')
+    ax.set_xticks(index)
+    ax.set_xticklabels(('Sum', 'Average'))
+    ax.legend()
+    fig.tight_layout()
     plt.show()
 
 run()
 
-
-
-
-
-
-
-
-
-
-
-
-# test()
 def test():
-    lat = 40.7127
-    lon = -74.0059
-    r = 2000
-    targ = Station(lat=lat,lon=lon)
-
-    # create stations
     s1 = Station(id='s1', target=1)
-    s2 = Station(id='s2', target=5)
-    s3 = Station(id='s3', target=3)
-    # s4 = Station(id='s4')
-    # s5 = Station(id='s5')
-    stations = [s1, s2, s3]
-    # randomize stations
-    for x in range(len(stations)):
-        s = stations[x]
-        s.randstation(lat, lon, r)
+    s = [s1]
+    distribute(s, 1)
 
-    # create distance list and print it
-    # dl = DistList()
-    # dl.distFill(stations, targ)
-    # print(targ.lat,targ.lon)
-    # dl.printList()
 
-    # create users
-    u1 = User(id='u1')
-    u2 = User(id='u2')
-    u3 = User(id='u3')
-    u4 = User(id='u4')
-    u5 = User(id='u5')
-    u6 = User(id='u6')
-    # u7 = User(id='u7')
-    # u8 = User(id='u8')
-    users = [u1, u2, u3, u4, u5, u6]
-    # randomize Users
-    for x in range(len(users)):
-        u = users[x]
-        u.createRandUser(stations)
-        print(u.printuser())
-
-    # prints incoming users for all stations
-    for x in range(len(stations)):
-        print(stations[x].id + ' incoming users: ')
-        for y in range(len(stations[x].inc)):
-            print(stations[x].inc[y].id)
-
-# runs algorithm, rerouting a maximum of k users
-    k = 3
-
-    # get sum of stations difference in stock before and after Algorithm is run
-    sdiffB = StationsDiff(stations)
-    distribute(stations, k)
-    sdiffA = StationsDiff(stations)
-
-    print('Diff B:', sdiffB)
-    print('Diff A:', sdiffA)
-
-    avgB = sdiffB/len(stations)
-    avgA = sdiffA/len(stations)
-
-    before = {sdiffB, avgB}
-    after = (sdiffA, avgA)
-    createGraph(before, after)

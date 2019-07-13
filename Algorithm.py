@@ -79,6 +79,19 @@ def distribute(stations, k):
 
     print('Algorithm has redistributed', rr_counter, 'users. DONE')
 
+# gets the sum/avg diff of an algorithm run before/after
+def print_results(sum_B, sum_A, avg_B, avg_A, run):
+    if run is 0:
+        print("Multi-run Results")
+    else:
+        print('Run #', run)
+    print('Before:')
+    print('Sum:', sum_B)
+    print("Average:", avg_B)
+    print('After:')
+    print('Sum:', sum_A)
+    print("Average:", avg_A)
+
 def meetsTarget(stations):
     check = False
     for x in stations:

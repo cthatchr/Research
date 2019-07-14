@@ -6,79 +6,83 @@ from DistList import *
 import numpy as np
 import matplotlib.pyplot as plt
 
-def run(num_runs):
-    mr_sum_A = 0
-    mr_sum_B = 0
-    mr_avg_A = 0
-    mr_avg_B = 0
-    # target is NYC
-    lat = 40.7127
-    lon = -74.0059
-    r = 2000
-    targ = Station(lat=lat, lon=lon)
+def startup():
+    settings = []
 
+    # select settings
     while True:
         try:
-            station_amount = int(input('How many stations would you like to create?:'))
+            settings.append((int(input('How many stations would you like to create?:'))))
             break
         except:
             print('Enter an integer.')
 
     while True:
         try:
-            user_amount = int(input('How many users would you like to create?:'))
+            settings.append(int(input('How many incoming users would you like to create?:')))
             break
         except:
             print('Enter an integer.')
 
     while True:
         try:
-            k = int(input('How many users are we allowed to move?:'))
+            settings.append(int(input('How many incoming users are we allowed to move?:')))
             break
         except:
             print('Enter an integer.')
 
-    # run j times
-    for j in range(num_runs):
-        stations = createStations(lat, lon, r, station_amount) # create stations
-        users = createUsers(stations, user_amount) # create users
+    while True:
+        try:
+            settings.append(int(input('Number of tests per run?:')))
+            break
+        except:
+            print('Enter an integer.')
 
-        # prints all information including incoming users for all stations
-        for x in range(len(stations)):
-            stations[x].display_info()
-        print('')
+    print(settings[2], settings[3])
+    run(settings)
 
-        # get sum of stations difference in stock before Algorithm is run (get stats before)
-        sum_B = StationsDiff(stations)
-        # runs algorithm, rerouting a maximum of k users
-        distribute(stations, k)
-        # get sum of stations difference in stock after Algorithm (get stats after)
-        sum_A = StationsDiff(stations)
-        # create averages from sums and amount fo stations
-        avg_B = sum_B / len(stations)
-        avg_A = sum_A / len(stations)
-        # print results
-        print_results(sum_B, sum_A, avg_B, avg_A, run=j+1)
 
-        # multi run results
-        mr_sum_B += sum_B
-        mr_sum_A += sum_A
-        mr_avg_B += avg_B
-        mr_avg_A += avg_A
+def run(settings):
+    stats_sum = []
+    stats_avg = []
+    index = []
+    k_sum_B = 0
+    k_avg_B = 0
+    k_sum_A = 0
+    k_avg_A = 0
 
-    # calculate multi run results and print them
-    mr_sum_B = mr_sum_B / num_runs
-    mr_sum_A = mr_sum_A / num_runs
-    mr_avg_B = mr_avg_B / num_runs
-    mr_avg_A = mr_avg_A / num_runs
-    print_results(mr_sum_B, mr_sum_A, mr_avg_B, mr_avg_A, run=0)
-    # would at this point turn this data into a plot point on the line graph
-    # turn into a list, @D array or point
+    targ = Station(lat=40.7127, lon=-74.0059) # target is NYC
 
-    #create bar graph
-    before = {mr_sum_B, mr_avg_B}
-    after = (mr_sum_A, mr_avg_A)
-    create_barplot(before, after)
+    for k in range(settings[2]+1): # setting that changes, meaning x axis value, users moved with each setting
+
+        for j in range(settings[3]): # run test with same settings, j times, get stats for each
+            stations = createStations(targ.lat, targ.lon, 2000, settings[0]) # create stations
+            users = createUsers(stations, settings[1]) # create users
+
+            j_sum_B = StationsDiff(stations) # get sum of stations difference in stock before, per test
+            distribute(stations, k)  # runs algorithm, rerouting a maximum of k users
+            j_sum_A = StationsDiff(stations) # get sum of stations difference in stock after, per test
+
+            j_avg_B = j_sum_B/len(stations)  # avg difference, per test
+            j_avg_A = j_sum_A/len(stations) # avg difference, per test
+
+            k_sum_B += j_sum_B  # add to k's increment sum
+            k_sum_A += j_sum_A  # add to k's increment sum
+            k_avg_B += j_avg_B  # add to k's increment avg
+            k_avg_A += j_avg_A # add to k's increment avg
+
+        k_sum_B = k_sum_B/settings[3]
+        k_avg_B = k_avg_B/settings[3]
+        k_sum_A = k_sum_A/settings[3]
+        k_avg_A = k_avg_A/settings[3]
+
+        index.append(k)
+        stats_sum.append([k_sum_B, k_sum_A])
+        stats_avg.append([k_avg_B, k_avg_A])
+
+    for x in index:
+        print(x, stats_sum[x][0], stats_sum[x][1])
+    create_lineplot(index, stats_sum, stats_avg) # create plot here
 
 
 def create_barplot(bef, aft):
@@ -97,21 +101,18 @@ def create_barplot(bef, aft):
     fig.tight_layout()
     plt.show()
 
-def create_lineplot(bef, aft):
+def create_lineplot(index, sum, avg):
     # create a line plot given a set of data
-    print()
+    # plt.plot(stats, label='sum')
+    plt.plot(index, sum[0:])
+    plt.plot(index, avg[0:])
+    plt.show()
 
 def test():
     s1 = Station(id='s1', target=1)
     s = [s1]
     distribute(s, 1)
 
-while True:
-    try:
-        j = int(input('Number of tests run:'))
-        break
-    except:
-        print('Enter an integer.')
-run(j)
+startup()
 
 

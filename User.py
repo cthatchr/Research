@@ -33,7 +33,7 @@ class User:
 
 def createUsers(stations, amount):
     users = []
-    print("Creating", amount, 'users.')
+    # print("Creating", amount, 'users.')
     for x in range(amount):
         id = 'U' + str(x + 1)
         # create user

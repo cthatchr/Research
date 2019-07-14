@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 
 def startup():
     settings = []
+    choice = {}
+    choice['1'] = "Constant Data."
+    choice['2'] = "Non-Constant Data."
 
     # select settings
     while True:
@@ -38,8 +41,65 @@ def startup():
         except:
             print('Enter an integer.')
 
-    print(settings[2], settings[3])
-    run(settings)
+    while True:
+        options = choice.keys()
+        for x in options:
+            print(x, choice[x])
+
+        selection = input("Select:")
+        if selection == '1':
+            cons_run(settings)
+            break
+        elif selection == '2':
+            run(settings)
+            break
+        else:
+            print('select again')
+
+
+def cons_run(settings): # runs with same data
+    stats_sum = []
+    stats_avg = []
+    index = np.arange(settings[2]+1)
+    j_sum = []
+    j_avg = []
+
+    targ = Station(lat=40.7127, lon=-74.0059)  # target is NYC
+
+    for j in range(settings[3]):  # run algorithm j times, i.e 50
+
+        stations = createStations(targ.lat, targ.lon, 2000, settings[0])  # create stations
+        users = createUsers(stations, settings[1])  # create users
+
+        kth_sum = []
+        kth_avg = []
+        for k in range(settings[2] + 1):  # run with same settings, k times, i.e users moved
+
+            kth_sum_B = StationsDiff(stations)  # get sum of stations difference in stock before, per run
+            distribute_incr(stations)  # runs algorithm, rerouting a single user then recording data
+            kth_sum_A = StationsDiff(stations)  # get sum of stations difference in stock after, per run
+
+            kth_avg_B = kth_sum_B / len(stations)  # avg difference, per run
+            kth_avg_A = kth_sum_A / len(stations)  # avg difference, per run
+
+            kth_sum.append([kth_sum_B, kth_sum_A])
+            kth_avg.append([kth_avg_B, kth_avg_A])
+
+        j_sum = np.array(kth_sum)
+        j_avg = np.array(kth_avg)
+
+        if j == 0: # initialize np array if first run, then start adding
+            stats_sum = j_sum
+            stats_avg = j_avg
+        else:
+            stats_sum = np.add(stats_sum, j_sum)
+            stats_avg = np.add(stats_avg, j_avg)
+
+    stats_sum = np.divide(stats_sum, settings[3])
+    stats_avg = np.divide(stats_avg, settings[3])
+
+    # print(index, stats_sum, stats_avg)
+    create_lineplot(index, stats_sum, stats_avg)  # create plot here
 
 
 def run(settings):
@@ -69,7 +129,7 @@ def run(settings):
             k_sum_B += j_sum_B  # add to k's increment sum
             k_sum_A += j_sum_A  # add to k's increment sum
             k_avg_B += j_avg_B  # add to k's increment avg
-            k_avg_A += j_avg_A # add to k's increment avg
+            k_avg_A += j_avg_A  # add to k's increment avg
 
         k_sum_B = k_sum_B/settings[3]
         k_avg_B = k_avg_B/settings[3]
@@ -80,8 +140,9 @@ def run(settings):
         stats_sum.append([k_sum_B, k_sum_A])
         stats_avg.append([k_avg_B, k_avg_A])
 
-    for x in index:
-        print(x, stats_sum[x][0], stats_sum[x][1])
+    stats_sum = np.array(stats_sum)
+    stats_avg = np.array(stats_avg)
+    # print(stats_sum, stats_avg)
     create_lineplot(index, stats_sum, stats_avg) # create plot here
 
 
@@ -103,9 +164,25 @@ def create_barplot(bef, aft):
 
 def create_lineplot(index, sum, avg):
     # create a line plot given a set of data
-    # plt.plot(stats, label='sum')
-    plt.plot(index, sum[0:])
-    plt.plot(index, avg[0:])
+    plt.figure()
+    plt.suptitle('Stock Difference Before/After Algorithm', fontsize=16)
+    plt.subplots_adjust(hspace=.5)
+    # plot sums
+    plt.subplot(211)
+    plt.title('Total')
+    plt.xlabel('Users Rerouted')
+    plt.ylabel('Total Stock Difference')
+    plt.plot(index, sum[:, 0], label='Before')
+    plt.plot(index, sum[:, 1], label='After')
+    plt.legend()
+    # plot avgs
+    plt.subplot(212)
+    plt.title('Average')
+    plt.xlabel('Users Rerouted')
+    plt.ylabel('Average Stock Difference')
+    plt.plot(index, avg[:, 0], label='Before')
+    plt.plot(index, avg[:, 1], label='After')
+    plt.legend()
     plt.show()
 
 def test():
@@ -114,5 +191,3 @@ def test():
     distribute(s, 1)
 
 startup()
-
-

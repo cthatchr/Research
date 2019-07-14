@@ -11,7 +11,7 @@ class Station:
         self.target = target # target amount
         self.inc = [] # list of incoming bikes
 
-    def rand_coord(self, targetLat, targetLon, radius):
+    def randstation(self, targetLat, targetLon, radius):
         y0 = targetLat
         x0 = targetLon
         rd = radius / 111300
@@ -37,9 +37,9 @@ class Station:
     # gets the difference of stock for the station, can get the absolute value as well
     def getdiff(self, absval=False):
         if absval == False:
-            return (self.curr + len(self.inc))- self.target
+            return self.target - self.curr - len(self.inc)
         else:
-            return abs((self.curr + len(self.inc))- self.target)
+            return abs(self.target - self.curr - len(self.inc))
 
     def display_info(self):
         print(self.id)
@@ -80,10 +80,13 @@ def createStations(lat, lon, radius, amount, max=10):
     # print('Creating', amount, 'stations.')
     for x in range(amount):
         id = 'S' + str(x+1)
-        curr = random.randint(1, max) # gives a random current amount between 0 and max (can be changed)
-        targ = random.randint(3, max) # gives a random target amount between 3 and max-2 (can be changed)
-        s = Station(id=id, target=targ, curr=curr) # create Station
-        s.rand_coord(lat, lon, radius)
+        # gives a random current amount between 0 and max (can be changed)
+        curr = random.randint(0, max-1)
+        # gives a random target amount between 3 and max-2 (can be changed)
+        targ = random.randint(3, max)
+        # create Station
+        s = Station(id=id, target=targ, curr=curr)
+        s.randstation(lat, lon, radius)
         stations.append(s)
     return stations
 

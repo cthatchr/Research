@@ -9,7 +9,7 @@ class DistList:
         self.distList = []
 
     # fills dict with the list of stations and their distance to the target station
-    def distFill(self, stations, target):
+    def fill(self, stations, target):
         length = len(stations)
         targetLoc = (target.lat, target.lon)
         for x in range(length):
@@ -19,12 +19,7 @@ class DistList:
                 dist = distance.distance(loc, targetLoc).meters
                 y = StationDW(stations[x], dist)
                 self.distList.append(y)
-        # sort
-        self.distList.sort(key=lambda StationDW: StationDW.dist)
-        # delete first one which is the target station
-        # self.distList.pop(0)
-
-
+        self.distList.sort(key=lambda StationDW: StationDW.dist)  # sort
 
     # filter out stations outside the radius
     def distFilter(self, radius):
@@ -46,3 +41,7 @@ class DistList:
             if x.station.has_rr_user():
                check = True
         return check
+
+    def changePriority(self):  # changes priority of all pairings to distance priority
+        for x in self.distList:
+            x.distance_priority()

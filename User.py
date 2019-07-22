@@ -1,10 +1,12 @@
 import random
+from geopy import distance
 
 class User:
     def __init__(self, id='U', start=0, dest=0, rerouted = False):
         self.id = id #id, u1..
         self.start = start #start station
         self.dest = dest #destination station
+        self.rrdest = None  # new destination(rerouted station)
         self.rerouted = rerouted # marks if a user was already rerouted
 
     def createRandUser(self, stations):
@@ -30,10 +32,18 @@ class User:
     def printuser(self):
         return 'ID: ' + self.id, 'Start: ' + self.start.id, 'Destination: ' + self.dest.id
 
+    def getDist(self):
+        if self.rrdest is None:
+            return 0
+        else:
+            x = (self.dest.lat, self.dest.lon)
+            y = (self.rrdest.lat, self.rrdest.lon)
+            return distance.distance(x,y).meters
+
 
 def createUsers(stations, amount):
     users = []
-    print("Creating", amount, 'users.')
+    # print("Creating", amount, 'users.')
     for x in range(amount):
         id = 'U' + str(x + 1)
         # create user
@@ -41,3 +51,9 @@ def createUsers(stations, amount):
         u.createRandUser(stations)
         users.append(u)
     return users
+
+def total_RR_distance(users):
+    total = 0
+    for x in users:
+        total += x.getDist()
+    return total

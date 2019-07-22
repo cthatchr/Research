@@ -6,80 +6,113 @@ from DistList import *
 import numpy as np
 import matplotlib.pyplot as plt
 
-def run(num_runs):
-    mr_sum_A = 0
-    mr_sum_B = 0
-    mr_avg_A = 0
-    mr_avg_B = 0
-    # target is NYC
-    lat = 40.7127
-    lon = -74.0059
-    r = 2000
-    targ = Station(lat=lat, lon=lon)
+def startup():
+    settings = []
+    choice = {}
+    choice['1'] = "Default Priority (Difference/Distance)"
+    choice['2'] = "Distance Priority (Difference/Distance\u00b2)"
 
+    # select settings
     while True:
         try:
-            station_amount = int(input('How many stations would you like to create?:'))
+            settings.append((int(input('How many stations would you like to create?:'))))
             break
         except:
             print('Enter an integer.')
 
     while True:
         try:
-            user_amount = int(input('How many users would you like to create?:'))
+            settings.append(int(input('How many incoming users would you like to create?:')))
             break
         except:
             print('Enter an integer.')
 
     while True:
         try:
-            k = int(input('How many users are we allowed to move?:'))
+            settings.append(int(input('How many incoming users are we allowed to move?:')))
             break
         except:
             print('Enter an integer.')
 
-    # run j times
-    for j in range(num_runs):
-        stations = createStations(lat, lon, r, station_amount) # create stations
-        users = createUsers(stations, user_amount) # create users
+    while True:
+        try:
+            settings.append(int(input('Number of tests per run?:')))
+            break
+        except:
+            print('Enter an integer.')
 
-        # prints all information including incoming users for all stations
-        for x in range(len(stations)):
-            stations[x].display_info()
-        print('')
+    while True:
+        options = choice.keys()
+        for x in options:
+            print(x, choice[x])
 
-        # get sum of stations difference in stock before Algorithm is run (get stats before)
-        sum_B = StationsDiff(stations)
-        # runs algorithm, rerouting a maximum of k users
-        distribute(stations, k)
-        # get sum of stations difference in stock after Algorithm (get stats after)
-        sum_A = StationsDiff(stations)
-        # create averages from sums and amount fo stations
-        avg_B = sum_B / len(stations)
-        avg_A = sum_A / len(stations)
-        # print results
-        print_results(sum_B, sum_A, avg_B, avg_A, run=j+1)
+        selection = input("Select:")
+        if selection == '1':
+            settings.append(1)
+            break
+        elif selection == '2':
+            settings.append(2)
+            break
+        else:
+            print('select again')
 
-        # multi run results
-        mr_sum_B += sum_B
-        mr_sum_A += sum_A
-        mr_avg_B += avg_B
-        mr_avg_A += avg_A
+    run(settings)
 
-    # calculate multi run results and print them
-    mr_sum_B = mr_sum_B / num_runs
-    mr_sum_A = mr_sum_A / num_runs
-    mr_avg_B = mr_avg_B / num_runs
-    mr_avg_A = mr_avg_A / num_runs
-    print_results(mr_sum_B, mr_sum_A, mr_avg_B, mr_avg_A, run=0)
-    # would at this point turn this data into a plot point on the line graph
-    # turn into a list, @D array or point
 
-    #create bar graph
-    before = {mr_sum_B, mr_avg_B}
-    after = (mr_sum_A, mr_avg_A)
-    create_barplot(before, after)
+def run(settings): # runs with same data
+    stats_sum = []
+    stats_avg = []
+    stats_dist = []
+    index = np.arange(settings[2]+1)
+    j_sum = []
+    j_avg = []
+    j_dist = []
 
+    targ = Station(lat=40.7127, lon=-74.0059)  # target is NYC
+
+    for j in range(settings[3]):  # run algorithm j times, i.e 50
+
+        stations = createStations(targ.lat, targ.lon, 2000, settings[0])  # create stations
+        users = createUsers(stations, settings[1])  # create users
+
+        kth_sum = []
+        kth_avg = []
+        kth_dist = []
+
+        for k in range(settings[2] + 1):  # run with same settings, k times, i.e users moved
+
+            if k == 0:  # run distribution 0 times if moving 0 users, else run distribution. then record data
+                distribute_incr(stations, settings[4], 0)  # runs algorithm, rerouting a single user then recording data
+            else:
+                distribute_incr(stations, settings[4])  # runs algorithm, rerouting a single user then recording data
+
+            sum = StationsDiff(stations)  # get sum of stations difference in stock before, per run
+            dist_rr = total_RR_distance(users) # get the total distance users were rerouted
+            avg = sum / len(stations)  # avg difference, per run
+
+            kth_sum.append(sum)
+            kth_avg.append(avg)
+            kth_dist.append(dist_rr)
+
+        j_sum = np.array(kth_sum)
+        j_avg = np.array(kth_avg)
+        j_dist = np.array(kth_dist)
+
+        if j == 0: # initialize np array if first run, then start adding
+            stats_sum = j_sum
+            stats_avg = j_avg
+            stats_dist = j_dist
+        else:
+            stats_sum = np.add(stats_sum, j_sum)
+            stats_avg = np.add(stats_avg, j_avg)
+            stats_dist = np.add(stats_dist, j_dist)
+
+    stats_sum = np.divide(stats_sum, settings[3])
+    stats_avg = np.divide(stats_avg, settings[3])
+    stats_dist = np.divide(stats_dist, settings[3])
+
+    print(index, stats_sum, stats_avg, stats_dist)
+    create_lineplot(index, stats_sum, stats_avg, stats_dist)  # create plot here
 
 def create_barplot(bef, aft):
     fig, ax = plt.subplots()
@@ -97,21 +130,38 @@ def create_barplot(bef, aft):
     fig.tight_layout()
     plt.show()
 
-def create_lineplot(bef, aft):
+def create_lineplot(index, sum, avg, dist):
     # create a line plot given a set of data
-    print()
+    plt.figure()
+    plt.suptitle('Stock Difference After Algorithm', fontsize=16)
+    plt.subplots_adjust(hspace=1)
+    # plot sums
+    plt.subplot(211)
+    plt.title('Total')
+    plt.xlabel('Users Rerouted')
+    plt.ylabel('Stock Difference')
+    plt.plot(index, sum)
+    plt.locator_params(axis='y', nbins=5)
+    # plot avgs
+    plt.subplot(212)
+    plt.title('Average')
+    plt.xlabel('Users Rerouted')
+    plt.ylabel('Stock Difference')
+    plt.plot(index, avg)
+    plt.locator_params(axis='y', nbins=5)
+
+    plt.figure()
+    # user distance moved
+    # plt.subplot(313)
+    plt.title('Distance Users Rerouted')
+    plt.xlabel('Users Rerouted')
+    plt.ylabel('Distance(Meters)')
+    plt.plot(index, dist)
+    plt.locator_params(axis='y', nbins=5)
+    plt.show()
 
 def test():
-    s1 = Station(id='s1', target=1)
-    s = [s1]
-    distribute(s, 1)
+    print("The area of your rectangle is {}cm\u00b2".format(1))
 
-while True:
-    try:
-        j = int(input('Number of tests run:'))
-        break
-    except:
-        print('Enter an integer.')
-run(j)
-
+startup()
 

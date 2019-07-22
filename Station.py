@@ -77,7 +77,7 @@ class Station:
 # creates n amount of stations around a target coordinate
 def createStations(lat, lon, radius, amount, max=10):
     stations = []
-    print('Creating', amount, 'stations.')
+    # print('Creating', amount, 'stations.')
     for x in range(amount):
         id = 'S' + str(x+1)
         # gives a random current amount between 0 and max (can be changed)

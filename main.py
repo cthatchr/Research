@@ -5,8 +5,47 @@ from User import *
 from DistList import *
 import numpy as np
 import matplotlib.pyplot as plt
+import citybikes
+import pandas as pd
+import json
+from pandas.io.json import json_normalize
 
 def startup():
+    choice = {}
+    choice['1'] = "Random Data"
+    choice['2'] = "Real Data"
+
+    while True:
+        options = choice.keys()
+        for x in options:
+            print(x, choice[x])
+
+        selection = input("Select:")
+        if selection == '1':
+            set_rand_settings()
+            break
+        elif selection == '2':
+            set_real_settings()
+            break
+        else:
+            print('select again')
+
+def set_real_settings():
+    settings = []
+
+    print('loading stations..')
+    stations = load_stations()
+    for x in stations:
+        x.print_info()
+    # select settings
+    """while True:
+        try:
+            settings.append((int(input('How many stations would you like to create?:'))))
+            break
+        except:
+            print('Enter an integer.')"""
+
+def set_rand_settings():
     settings = []
     choice = {}
     choice['1'] = "Default Priority (Difference/Distance)"
@@ -56,10 +95,10 @@ def startup():
         else:
             print('select again')
 
-    run(settings)
+    run_random(settings)
 
 
-def run(settings): # runs with same data
+def run_random(settings): # runs with same random data
     stats_sum = []
     stats_avg = []
     stats_dist = []
@@ -72,7 +111,7 @@ def run(settings): # runs with same data
 
     for j in range(settings[3]):  # run algorithm j times, i.e 50
 
-        stations = createStations(targ.lat, targ.lon, 2000, settings[0])  # create stations
+        stations = create_rand_stations(targ.lat, targ.lon, 2000, settings[0])  # create stations
         users = createUsers(stations, settings[1])  # create users
 
         kth_sum = []
@@ -114,21 +153,11 @@ def run(settings): # runs with same data
     print(index, stats_sum, stats_avg, stats_dist)
     create_lineplot(index, stats_sum, stats_avg, stats_dist)  # create plot here
 
-def create_barplot(bef, aft):
-    fig, ax = plt.subplots()
-    width = 0.35
-    index = np.arange(len(bef))
-    before = ax.bar(index - width/2, bef, width, color='r', label='Before', data=bef)
-    after = ax.bar(index + width/2, aft, width, color='g', label='After', data=aft)
 
-    ax.set_xlabel('Before/After Algorithm')
-    ax.set_ylabel('Stock Difference')
-    ax.set_title('Stock Difference Between Target and Current')
-    ax.set_xticks(index)
-    ax.set_xticklabels(('Sum', 'Average'))
-    ax.legend()
-    fig.tight_layout()
-    plt.show()
+def run_real(settings): # runs with real dataset
+    print()
+    # placeholder
+
 
 def create_lineplot(index, sum, avg, dist):
     # create a line plot given a set of data
@@ -160,8 +189,13 @@ def create_lineplot(index, sum, avg, dist):
     plt.locator_params(axis='y', nbins=5)
     plt.show()
 
-def test():
-    print("The area of your rectangle is {}cm\u00b2".format(1))
 
-startup()
+def test():
+    pd.set_option('display.max_columns', None)
+
+    df = pd.read_csv('indego-trips-2019-q1.csv')
+    print(df)
+
+
+test()
 

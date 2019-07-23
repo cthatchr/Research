@@ -1,5 +1,8 @@
 import random
 import math
+import json
+import pandas as pd
+from pandas.io.json import json_normalize
 
 class Station:
     def __init__(self, id='S', lat=0, lon=0, max=10, curr=0, target=2):
@@ -11,7 +14,7 @@ class Station:
         self.target = target # target amount
         self.inc = [] # list of incoming bikes
 
-    def randstation(self, targetLat, targetLon, radius):
+    def rand_coord(self, targetLat, targetLon, radius):
         y0 = targetLat
         x0 = targetLon
         rd = radius / 111300
@@ -31,9 +34,6 @@ class Station:
         if self.id == 'S':
             self.id = 'S%03x' % random.randrange(16 ** 3)
 
-    def print_coord(self):
-        return self.id, self.lat, self.lon
-
     # gets the difference of stock for the station, can get the absolute value as well
     def getdiff(self, absval=False):
         if absval == False:
@@ -41,8 +41,11 @@ class Station:
         else:
             return abs(self.target - self.curr - len(self.inc))
 
-    def display_info(self):
-        print(self.id)
+    def print_coord(self):
+        return self.id, self.lat, self.lon
+
+    def print_info(self):
+        print(self.id, self.lat,self.lon)
         print('Current:', self.curr)
         print('Target:', self.target)
         print('Incoming:', len(self.inc), end=' ')
@@ -75,9 +78,8 @@ class Station:
 
 
 # creates n amount of stations around a target coordinate
-def createStations(lat, lon, radius, amount, max=10):
+def create_rand_stations(lat, lon, radius, amount, max=10):
     stations = []
-    # print('Creating', amount, 'stations.')
     for x in range(amount):
         id = 'S' + str(x+1)
         # gives a random current amount between 0 and max (can be changed)
@@ -86,7 +88,25 @@ def createStations(lat, lon, radius, amount, max=10):
         targ = random.randint(3, max)
         # create Station
         s = Station(id=id, target=targ, curr=curr)
-        s.randstation(lat, lon, radius)
+        s.rand_coord(lat, lon, radius)
+        stations.append(s)
+    return stations
+
+
+def load_stations():  # loads stations from json data
+    stations = []
+    with open('indego_stationdata.json') as d:  # reads json data from file
+        data = json.load(d)
+    dfd = json_normalize(data, record_path='features')  # normalizes json data
+    df = pd.DataFrame(dfd)  # turns json data into Dataframe to work off of
+
+    for index, row in df.iterrows():  # loops through each record of station
+        s = Station(id=row['properties.kioskId'],
+                    lat=row['properties.latitude'],
+                    lon=row['properties.longitude'],
+                    max=row['properties.totalDocks'],
+                    curr=row['properties.bikesAvailable'],
+                    target=row['properties.totalDocks'])
         stations.append(s)
     return stations
 

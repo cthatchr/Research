@@ -35,10 +35,10 @@ class Station:
             self.id = 'S%03x' % random.randrange(16 ** 3)
 
     def getdiff(self, absval=False): # gets the difference of stock for the station, can get the absolute value as well
-        if absval == False:
-            return self.target - self.curr - len(self.inc)
+        if absval is False:
+            return (self.curr + len(self.inc)) - self.target
         else:
-            return abs(self.target - self.curr - len(self.inc))
+            return abs((self.curr + len(self.inc)) - self.target)
 
     def print_info(self):
         print(self.id, self.lat,self.lon)

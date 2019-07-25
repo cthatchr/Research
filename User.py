@@ -5,11 +5,11 @@ import pandas as pd
 from datetime import datetime, date, time, timedelta
 
 class User:
-    def __init__(self, id='U', start=0, dest=0, rerouted=False):
+    def __init__(self, id='U', start=0, end=0, rerouted=False):
         self.id = id  # id, u1..
         self.start = start  # start station
-        self.dest = dest  # destination station
-        self.rrdest = None  # new destination(rerouted station)
+        self.end = end  # destination station
+        self.rr_end = None  # new destination(rerouted station)
         self.rerouted = rerouted  # marks if a user was already rerouted
 
     def createRandUser(self, stations):
@@ -25,22 +25,22 @@ class User:
             randdest = random.randint(0, len(stations)-1)
 
         self.start = stations[randstart]
-        self.dest = stations[randdest]
+        self.end = stations[randdest]
         self.rerouted = False
 
         # add user to incoming for station
         # print(self)
-        self.dest.inc.append(self)
+        self.end.inc.append(self)
 
     def printuser(self):
-        return 'ID: ' + self.id, 'Start: ' + self.start.id, 'Destination: ' + self.dest.id
+        return 'ID: ' + self.id, 'Start: ' + self.start.id, 'Destination: ' + self.end.id
 
     def getDist(self):
         if self.rerouted is False:
             return 0
         else:
-            x = (self.dest.lat, self.dest.lon)
-            y = (self.rrdest.lat, self.rrdest.lon)
+            x = (self.end.lat, self.end.lon)
+            y = (self.rr_end.lat, self.rr_end.lon)
             return distance.distance(x, y).meters
 
 
@@ -74,9 +74,9 @@ def load_users(stations, time_interval):
         if d is None:
             count += 1
             continue
-        u = User(id=row['trip_id'], start=s, dest=d)
+        u = User(id=row['trip_id'], start=s, end=d)
         users.append(u)
-        u.dest.inc.append(u)
+        u.end.inc.append(u)
     if count > 0:  # if users were not loaded due to out of date stations
         print(count, 'user(s) not loaded')
     return users

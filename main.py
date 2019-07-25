@@ -9,6 +9,7 @@ import citybikes
 import pandas as pd
 import json
 from pandas.io.json import json_normalize
+from datetime import datetime
 
 def startup():
     choice = {}
@@ -30,20 +31,18 @@ def startup():
         else:
             print('select again')
 
-def set_real_settings():
+def set_real_settings(): # select settings for real data run
     settings = []
 
-    print('loading stations..')
-    stations = load_stations()
-    for x in stations:
-        x.print_info()
-    # select settings
-    """while True:
+    while True:
         try:
-            settings.append((int(input('How many stations would you like to create?:'))))
+            settings.append((int(input
+                                 ('A random date will be used. In minutes, how many user trips would you like to use?:'))))
             break
         except:
-            print('Enter an integer.')"""
+            print('Enter an integer.')
+
+    run_real(settings)
 
 def set_rand_settings():
     settings = []
@@ -112,7 +111,7 @@ def run_random(settings): # runs with same random data
     for j in range(settings[3]):  # run algorithm j times, i.e 50
 
         stations = create_rand_stations(targ.lat, targ.lon, 2000, settings[0])  # create stations
-        users = createUsers(stations, settings[1])  # create users
+        users = create_rand_users(stations, settings[1])  # create users
 
         kth_sum = []
         kth_avg = []
@@ -155,8 +154,35 @@ def run_random(settings): # runs with same random data
 
 
 def run_real(settings): # runs with real dataset
-    print()
-    # placeholder
+
+    stations = load_stations()
+    users = load_users(stations, settings[0])
+
+    stats_sum = []
+    stats_avg = []
+    stats_dist = []
+    index = np.arange(len(users)+1)
+
+    for k in range(len(users)+1):  # run with real data
+
+        if k > 0:  # run distribution 0 if not moving user
+            distribute_incr(stations)  # runs algorithm, rerouting a single user then recording data
+
+        sum = StationsDiff(stations)  # get sum of stations difference in stock before, per run
+        dist_rr = total_RR_distance(users)  # get the total distance users were rerouted
+        avg = sum / len(stations)  # avg difference, per run
+
+        stats_sum.append(sum)
+        stats_avg.append(avg)
+        stats_dist.append(dist_rr)
+
+    stats_sum = np.array(stats_sum)
+    stats_avg = np.array(stats_avg)
+    stats_dist = np.array(stats_dist)
+    # print(index, stats_sum, stats_avg, stats_dist)
+    create_lineplot(index, stats_sum, stats_avg, stats_dist)  # create plot here
+
+
 
 
 def create_lineplot(index, sum, avg, dist):
@@ -194,8 +220,10 @@ def test():
     pd.set_option('display.max_columns', None)
 
     df = pd.read_csv('indego-trips-2019-q1.csv')
-    print(df)
+
+    load_users([],10)
 
 
-test()
+
+run_real([50])
 

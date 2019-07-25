@@ -41,13 +41,9 @@ class Station:
         else:
             return abs(self.target - self.curr - len(self.inc))
 
-    def print_coord(self):
-        return self.id, self.lat, self.lon
-
     def print_info(self):
         print(self.id, self.lat,self.lon)
         print('Current:', self.curr)
-        print('Target:', self.target)
         print('Incoming:', len(self.inc), end=' ')
         if len(self.inc) is 0:
             print('()')
@@ -58,8 +54,9 @@ class Station:
                     print(self.inc[y].id, end=')\n')
                 else:
                     print(self.inc[y].id, end=' ')
-
-        print('Difference:', self.getdiff())
+        print('Target:', self.target)
+        print('Max:', self.max)
+        print('Difference:', -self.getdiff())
         print('')
 
     # returns true if there is a reroutable user
@@ -105,10 +102,11 @@ def load_stations():  # loads stations from json data
                     lat=row['properties.latitude'],
                     lon=row['properties.longitude'],
                     max=row['properties.totalDocks'],
-                    curr=row['properties.bikesAvailable'],
-                    target=row['properties.totalDocks'])
+                    curr=row['properties.bikesAvailable'])
+        s.target = random.randint(3, s.max)
         stations.append(s)
     return stations
+
 
 # checks if ANY of the stations have a reroutable user, true if they do
 def stations_has_rr_user(stations):
@@ -117,6 +115,14 @@ def stations_has_rr_user(stations):
         if x.has_rr_user():
             check = True
     return check
+
+
+def get_station_by_id(stations, id):
+    for x in stations:
+        if x.id == id:
+            return x
+            break
+
 
 
 

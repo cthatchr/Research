@@ -1,5 +1,8 @@
 import random
+from Station import *
 from geopy import distance
+import pandas as pd
+from datetime import datetime, date, time, timedelta
 
 class User:
     def __init__(self, id='U', start=0, dest=0, rerouted = False):
@@ -38,10 +41,10 @@ class User:
         else:
             x = (self.dest.lat, self.dest.lon)
             y = (self.rrdest.lat, self.rrdest.lon)
-            return distance.distance(x,y).meters
+            return distance.distance(x, y).meters
 
 
-def createUsers(stations, amount):
+def create_rand_users(stations, amount):
     users = []
     # print("Creating", amount, 'users.')
     for x in range(amount):
@@ -52,8 +55,36 @@ def createUsers(stations, amount):
         users.append(u)
     return users
 
+def load_users(stations, time_interval):
+    users = []
+    pd.set_option('display.max_columns', None)
+    df = pd.read_csv('indego-trips-2019-q1.csv')  # load users
+
+    strt = rand_date(df)  # creates a random date to start from
+    end = strt + timedelta(minutes=time_interval)  # random end based on strt and time interval given(in minutes)
+
+    # filters rows between these two start and end times
+    df = df[df['start_time'].between(
+        strt.strftime('%Y-%m-%d %H:%M:%S'), end.strftime('%Y-%m-%d %H:%M:%S'))]
+
+    for index, row in df.iterrows():  # loops through each record of user
+        u = User(id=row['trip_id'],
+                 start=get_station_by_id(stations, row['start_station']),
+                 dest=get_station_by_id(stations, row['end_station']))
+        users.append(u)
+        u.dest.inc.append(u)
+        # u.dest.print_info()
+    return users
+
 def total_RR_distance(users):
     total = 0
     for x in users:
         total += x.getDist()
     return total
+
+def rand_date(df): # creates a random date between the start and end date
+    start = datetime.strptime(df.iloc[0]['start_time'], '%Y-%m-%d %H:%M:%S')
+    end = datetime.strptime(df.iloc[len(df.index)-1]['start_time'], '%Y-%m-%d %H:%M:%S')
+    diff = int((end - start).total_seconds()) # diff of seconds between first and last date
+    sec = random.randint(0, diff) # creates random int in this diff and then adds to start time
+    return start + timedelta(seconds=sec)

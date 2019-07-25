@@ -5,12 +5,12 @@ import pandas as pd
 from datetime import datetime, date, time, timedelta
 
 class User:
-    def __init__(self, id='U', start=0, dest=0, rerouted = False):
-        self.id = id #id, u1..
-        self.start = start #start station
-        self.dest = dest #destination station
+    def __init__(self, id='U', start=0, dest=0, rerouted=False):
+        self.id = id  # id, u1..
+        self.start = start  # start station
+        self.dest = dest  # destination station
         self.rrdest = None  # new destination(rerouted station)
-        self.rerouted = rerouted # marks if a user was already rerouted
+        self.rerouted = rerouted  # marks if a user was already rerouted
 
     def createRandUser(self, stations):
         # assign random id if not given
@@ -36,7 +36,7 @@ class User:
         return 'ID: ' + self.id, 'Start: ' + self.start.id, 'Destination: ' + self.dest.id
 
     def getDist(self):
-        if self.rrdest is None:
+        if self.rerouted is False:
             return 0
         else:
             x = (self.dest.lat, self.dest.lon)
@@ -57,6 +57,7 @@ def create_rand_users(stations, amount):
 
 def load_users(stations, time_interval):
     users = []
+    count = 0
     pd.set_option('display.max_columns', None)
     df = pd.read_csv('indego-trips-2019-q1.csv')  # load users
 
@@ -68,15 +69,20 @@ def load_users(stations, time_interval):
         strt.strftime('%Y-%m-%d %H:%M:%S'), end.strftime('%Y-%m-%d %H:%M:%S'))]
 
     for index, row in df.iterrows():  # loops through each record of user
-        u = User(id=row['trip_id'],
-                 start=get_station_by_id(stations, row['start_station']),
-                 dest=get_station_by_id(stations, row['end_station']))
+        s = get_station_by_id(stations, row['start_station'])
+        d = get_station_by_id(stations, row['end_station'])
+        if d is None:
+            count += 1
+            continue
+        u = User(id=row['trip_id'], start=s, dest=d)
         users.append(u)
         u.dest.inc.append(u)
-        # u.dest.print_info()
+    if count > 0:  # if users were not loaded due to out of date stations
+        print(count, 'user(s) not loaded')
     return users
 
-def total_RR_distance(users):
+
+def total_RR_distance(users):  # gets the total distance users were rerouted from their original destinations
     total = 0
     for x in users:
         total += x.getDist()

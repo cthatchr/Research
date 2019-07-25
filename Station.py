@@ -96,7 +96,6 @@ def load_stations():  # loads stations from json data
         data = json.load(d)
     dfd = json_normalize(data, record_path='features')  # normalizes json data
     df = pd.DataFrame(dfd)  # turns json data into Dataframe to work off of
-
     for index, row in df.iterrows():  # loops through each record of station
         s = Station(id=row['properties.kioskId'],
                     lat=row['properties.latitude'],
@@ -118,10 +117,14 @@ def stations_has_rr_user(stations):
 
 
 def get_station_by_id(stations, id):
+    check = None
     for x in stations:
         if x.id == id:
+            check = x
             return x
             break
+    if check is None:
+        print("couldn't find", id)
 
 
 

@@ -120,9 +120,9 @@ def run_random(settings): # runs with same random data
         for k in range(settings[2] + 1):  # run with same settings, k times, i.e users moved
 
             if k == 0:  # run distribution 0 times if moving 0 users, else run distribution. then record data
-                distribute_incr(stations, settings[4], 0)  # runs algorithm, rerouting a single user then recording data
+                distribute_random(stations, settings[4], 0)  # runs algorithm, rerouting a single user then recording data
             else:
-                distribute_incr(stations, settings[4])  # runs algorithm, rerouting a single user then recording data
+                distribute_random(stations, settings[4])  # runs algorithm, rerouting a single user then recording data
 
             sum = StationsDiff(stations)  # get sum of stations difference in stock before, per run
             dist_rr = total_RR_distance(users) # get the total distance users were rerouted
@@ -158,15 +158,22 @@ def run_real(settings): # runs with real dataset
     stations = load_stations()
     users = load_users(stations, settings[0])
 
-    stats_sum = []
-    stats_avg = []
-    stats_dist = []
+    sum = StationsDiff(stations)  # get sum of stations difference in stock before, per run
+    dist_rr = total_RR_distance(users)  # get the total distance users were rerouted
+    avg = sum / len(stations)  # avg difference, per run
+
+    stats_sum = [sum]
+    stats_avg = [avg]
+    stats_dist = [dist_rr]
     index = np.arange(len(users)+1)
 
-    for k in range(len(users)+1):  # run with real data
+    for k in range(len(users)):  # run with real data
 
-        if k > 0:  # run distribution 0 if not moving user
-            distribute_incr(stations)  # runs algorithm, rerouting a single user then recording data
+        if meetsTarget(stations) is False:  # run distribution if stations don't meet targets
+            print('stations DONT MEET targets')
+            distribute_real(stations)  # runs algorithm, rerouting a single user then recording data
+        else:
+            print('stations MEET targets')
 
         sum = StationsDiff(stations)  # get sum of stations difference in stock before, per run
         dist_rr = total_RR_distance(users)  # get the total distance users were rerouted
@@ -221,9 +228,12 @@ def test():
 
     df = pd.read_csv('indego-trips-2019-q1.csv')
 
-    load_users([],10)
+    stations = load_stations()
+
+    load_users(stations, 10)
 
 
 
 run_real([50])
+
 

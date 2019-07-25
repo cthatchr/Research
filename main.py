@@ -153,7 +153,7 @@ def run_random(settings): # runs with same random data
     create_lineplot(index, stats_sum, stats_avg, stats_dist)  # create plot here
 
 
-def run_real(settings): # runs with real dataset
+def run_real(settings):  # runs with real dataset
 
     stations = load_stations()
     users = load_users(stations, settings[0])
@@ -170,7 +170,7 @@ def run_real(settings): # runs with real dataset
     for k in range(len(users)):  # run with real data
 
         if meetsTarget(stations) is False:  # run distribution if stations don't meet targets
-            print('stations DONT MEET targets')
+            # print('stations DONT MEET targets')
             distribute_real(stations)  # runs algorithm, rerouting a single user then recording data
         else:
             print('stations MEET targets')

@@ -34,8 +34,7 @@ class Station:
         if self.id == 'S':
             self.id = 'S%03x' % random.randrange(16 ** 3)
 
-    # gets the difference of stock for the station, can get the absolute value as well
-    def getdiff(self, absval=False):
+    def getdiff(self, absval=False): # gets the difference of stock for the station, can get the absolute value as well
         if absval == False:
             return self.target - self.curr - len(self.inc)
         else:

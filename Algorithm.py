@@ -76,8 +76,7 @@ def distribute_random(stations, priority=0, k=1):
 def distribute_real(stations, priority=0, ):
     target = None
     # loop through stations to SET TARGET STATION
-    for x in stations:
-        # set target station to one farthest from target amount
+    for x in stations:  # set target station to one farthest from target amount
         if target is None:
             target = x
         elif x.getdiff() > target.getdiff():
@@ -89,22 +88,18 @@ def distribute_real(stations, priority=0, ):
         dl.changePriority()
     dlist = dl.distList
 
-    # if there are no stations with reroutable users then the algorithm stops
-    if stations_has_rr_user(stations) is False:
+    if stations_has_rr_user(stations) is False: # if no stations with reroutable users then the algorithm stops
         return
-    # loop through distlist to FIND STATION TO REROUTE FROM
+
     # ASSIGN STATION TO REROUTE FROM if priority is larger than others and station has incoming users that can be rerouted
     rr = None
-    for y in dlist:
-        # checks if the station has an incoming reroutable user, skips otherwise
+    for y in dlist:  # checks if the station has an incoming reroutable user, skips otherwise
         if y.station.has_rr_user() is False:
             continue
 
-        # if not already assigned then assign
-        if rr is None:
+        if rr is None:  # if not already assigned then assign
             rr = y
-        # otherwise only choose the lowest priority station
-        elif (y.priority < rr.priority):
+        elif y.priority < rr.priority:  # otherwise only choose the lowest priority station
             rr = y
 
     # if there are no stations to take reroutable users from, i.e. target station has the only ones, stop algorithm
@@ -138,6 +133,3 @@ def StationsDiff(stations):
     for x in stations:
         total += x.getdiff(absval=True)
     return total
-
-# get sum of total distance users were relocated between stations
-# def UsersDiff(stations):

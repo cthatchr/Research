@@ -59,3 +59,8 @@ class DistList:
         elif p == 4:    # 4 = only diff  diff
             for x in self.distList:
                 x.only_difference()
+        elif p == 5:    # 5 = random    rand(0, len)
+            rand = list(range(0, len(self.distList)))
+            random.shuffle(rand)
+            for x in self.distList:
+                x.priority = rand.pop()

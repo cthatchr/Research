@@ -77,8 +77,8 @@ def load_users(stations, time_interval):
         u = User(id=row['trip_id'], start=s, end=d)
         users.append(u)
         u.end.inc.append(u)
-    if count > 0:  # if users were not loaded due to out of date stations
-        print(count, 'user(s) not loaded')
+    """if count > 0:  # if users were not loaded due to out of date stations
+        print(count, 'user(s) not loaded')"""
     return users
 
 

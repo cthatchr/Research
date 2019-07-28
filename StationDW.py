@@ -22,3 +22,6 @@ class StationDW:
 
     def only_difference(self):  # priority becomes the difference, highest
         self.priority = self.station.getdiff()
+
+    def random_priority(self, prio):  # assign random order in which stations are prioritized
+        self.priority = prio

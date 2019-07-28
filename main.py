@@ -201,7 +201,7 @@ def compare_real(stations, users):  # runs and compares real data against the di
     stats_dist = []
     index = np.arange(len(users)+1)
 
-    for x in range(5):  # runs algorithm with different prio, starts fresh each time
+    for x in range(6):  # runs algorithm with different prio, starts fresh each time
         if x != 0:
             reset_users(users)  # reset users back to original positions
         stats = run_real(stations, users, x)  # run alg and gather data for priority x
@@ -232,6 +232,7 @@ def compare_lineplot(index, sum, avg, dist):
     plt.plot(index, sum[2], label='Difference^2')
     plt.plot(index, sum[3], label='Only Distance')
     plt.plot(index, sum[4], label='Only Difference')
+    plt.plot(index, sum[5], label='Random')
     plt.locator_params(axis='y', nbins=5)
     # plot avgs
     plt.subplot(212)
@@ -243,6 +244,7 @@ def compare_lineplot(index, sum, avg, dist):
     plt.plot(index, avg[2], label='Difference^2')
     plt.plot(index, avg[3], label='Only Distance')
     plt.plot(index, avg[4], label='Only Difference')
+    plt.plot(index, avg[5], label='Random')
     plt.locator_params(axis='y', nbins=5)
     plt.legend()
     plt.figure()
@@ -256,6 +258,7 @@ def compare_lineplot(index, sum, avg, dist):
     plt.plot(index, dist[2], label='Difference^2')
     plt.plot(index, dist[3], label='Only Distance')
     plt.plot(index, dist[4], label='Only Difference')
+    plt.plot(index, dist[5], label='Random')
     plt.locator_params(axis='y', nbins=5)
     plt.legend()
     plt.show()

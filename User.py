@@ -36,7 +36,7 @@ class User:
         return 'ID: ' + self.id, 'Start: ' + self.start.id, 'Destination: ' + self.end.id
 
     def getDist(self):
-        if self.rerouted is False:
+        if self.rr_end is None:
             return 0
         else:
             x = (self.end.lat, self.end.lon)
@@ -88,9 +88,24 @@ def total_RR_distance(users):  # gets the total distance users were rerouted fro
         total += x.getDist()
     return total
 
+
 def rand_date(df): # creates a random date between the start and end date
     start = datetime.strptime(df.iloc[0]['start_time'], '%Y-%m-%d %H:%M:%S')
     end = datetime.strptime(df.iloc[len(df.index)-1]['start_time'], '%Y-%m-%d %H:%M:%S')
     diff = int((end - start).total_seconds()) # diff of seconds between first and last date
     sec = random.randint(0, diff) # creates random int in this diff and then adds to start time
     return start + timedelta(seconds=sec)
+
+
+def print_users(users):
+    for x in users:
+        print(x.id)
+
+
+def reset_users(users):  # resets the users so we can run the algorithm fresh
+    for x in users:
+        if x.rr_end is not None:  # resets as long as user was rerouted
+            x.rr_end.inc.remove(x)  # remove user from rerouted stations incoming
+            x.rr_end = None  # reset users rerouted station
+            x.end.inc.append(x)  # add user back to original stations incoming
+            x.rerouted = False

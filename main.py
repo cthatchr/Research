@@ -174,7 +174,6 @@ def run_real(stations, users,  p):  # runs with real dataset
     for k in range(len(users)):  # run with real data
 
         if meetsTarget(stations) is False:  # run distribution if stations don't meet targets
-            # print('stations DONT MEET targets')
             distribute_real(stations, p)  # runs algorithm, rerouting a single user then recording data
         else:
             print('stations MEET targets')
@@ -187,12 +186,8 @@ def run_real(stations, users,  p):  # runs with real dataset
         stats_avg.append(avg)
         stats_dist.append(dist_rr)
 
-    # stats_sum = np.array(stats_sum)
-    # stats_avg = np.array(stats_avg)
-    # stats_dist = np.array(stats_dist)
     return [stats_sum, stats_avg, stats_dist]
-    # print(index, stats_sum, stats_avg, stats_dist)
-    # create_lineplot(index, stats_sum, stats_avg, stats_dist)  # create plot here
+
 
 
 def compare_real(stations, users):  # runs and compares real data against the different priority options

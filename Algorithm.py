@@ -62,18 +62,14 @@ def distribute_random(stations, priority=0, k=1):
         rr_user.rerouted = True
 
 
-
 def distribute_real(stations, priority):
     target = None
     # loop through stations to SET TARGET STATION
     for x in stations:  # set target station to one farthest from target amount, lowest diff
         if target is None:
             target = x
-            # print('target is now', target.id,'with a difference of',target.getdiff())
         elif x.getdiff() < target.getdiff():
             target = x
-            # print('target is now', target.id, 'with a difference of', target.getdiff())
-    # print('Final target is', target.id)
     # create list of stations with distance pairings near target
     dl = DistList(priority)
     dl.fill(stations, target)
@@ -88,31 +84,23 @@ def distribute_real(stations, priority):
         if y.station.has_rr_user() is True:
             if rr is None:  # if not already assigned then assign
                 rr = y
-                # print('rr is now', rr.station.id, 'with a priority of', rr.priority, 'and diff of', rr.station.getdiff())
             elif (y.priority > rr.priority) and priority != 3:  # choose the highest priority station
                 rr = y
             elif (y.priority < rr.priority) and priority == 3:  # if priority is only_distance choose lowest instead
                 rr = y
-                # print('rr is now', rr.station.id, 'with a priority of', rr.priority, 'and diff of', rr.station.getdiff())
 
     # if there are no stations to take reroutable users from, i.e. target station has the only ones, stop algorithm
     if rr is None:
-        print('not rerouting')
         return
-    # print('final rr is ', rr.station.id, 'with a priority of', rr.priority)
     rr_station = rr.station  # assign rerouted station from distance pairings
     rr_user = rr_station.get_rr_user()  # get incoming user to reroute to target station
 
     # reroute user to target station(remove+append), mark them rerouted and increment k
-    # print('rerouting')
     rr_station.inc.remove(rr_user)
     target.inc.append(rr_user)
     rr_user.rr_end = target
     rr_user.rerouted = True
-    """print(rr_user.rr_end.id, rr_user.end.id,rr_user.rerouted)
-    x = (rr_user.end.lat, rr_user.end.lon)
-    y = (rr_user.rr_end.lat, rr_user.rr_end.lon)
-    print(distance.distance(x, y).meters)"""
+
 
 
 def meetsTarget(stations):

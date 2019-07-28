@@ -116,14 +116,11 @@ def stations_has_rr_user(stations):
 
 
 def get_station_by_id(stations, id):
-    check = None
     for x in stations:
         if x.id == id:
-            check = x
             return x
             break
-    if check is None:
-        print("couldn't find", id)
+
 
 
 

@@ -34,7 +34,7 @@ class Station:
         if self.id == 'S':
             self.id = 'S%03x' % random.randrange(16 ** 3)
 
-    def getdiff(self, absval=False): # gets the difference of stock for the station, can get the absolute value as well
+    def getdiff(self, absval=False):  # gets the difference of stock for the station, can get the absolute value as well
         if absval is False:
             return (self.curr + len(self.inc)) - self.target
         else:
@@ -74,7 +74,7 @@ class Station:
 
 
 # creates n amount of stations around a target coordinate
-def create_rand_stations(lat, lon, radius, amount, max=10):
+def create_rand_stations(lat, lon, radius, amount, distribution_type=4, max=10):
     stations = []
     for x in range(amount):
         id = 'S' + str(x+1)
@@ -101,10 +101,18 @@ def load_stations():  # loads stations from json data
                     lon=row['properties.longitude'],
                     max=row['properties.totalDocks'],
                     curr=row['properties.bikesAvailable'])
-        s.target = random.randint(3, s.max)
         stations.append(s)
     return stations
 
+
+def set_stations_t_distr(stations, target_distr_type=4):
+    for x in stations:
+        set_target_distribution(x, target_distr_type)
+
+
+def set_stations_c_distr(stations, curr_distr_type=4):
+    for x in stations:
+        set_curr_distribution(x, curr_distr_type)
 
 # checks if ANY of the stations have a reroutable user, true if they do
 def stations_has_rr_user(stations):
@@ -122,6 +130,43 @@ def get_station_by_id(stations, id):
             break
 
 
+def set_target_distribution(station, dist_type):  # sets stations target amount; low, medium, high, or random
+    max = station.max
+    half = int(round(max/2))
+    if dist_type is 1:  # low 0-half
+        station.target = random.randint(0, half)
+
+    elif dist_type is 2:  # med 1/4-3/4
+        lower = int(round(half/2))
+        upper = int(round(half + lower))
+        station.target = random.randint(lower, upper)
+
+    elif dist_type is 3:  # high half-max
+        station.target = random.randint(half, max)
+
+    elif dist_type is 4:  # random 0-max
+        station.target = random.randint(0, max)
 
 
+# might want to add current distribution that works off of the target amount***
+def set_curr_distribution(station, dist_type):  # sets stations current amount; low, medium, high, or random
+    max = station.max
+    half = int(round(max/2))
+    if dist_type is 1:  # low 0-half
+        station.curr = random.randint(0, half)
 
+    elif dist_type is 2:  # med 1/4-3/4
+        lower = int(round(half/2))
+        upper = int(round(half + lower))
+        station.curr = random.randint(lower, upper)
+
+    elif dist_type is 3:  # high half-max
+        station.curr = random.randint(half, max)
+
+    elif dist_type is 4:  # random 0-max
+        station.curr = random.randint(0, max)
+
+
+def delete_inc(stations):
+    for x in stations:
+        x.inc.clear()

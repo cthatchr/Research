@@ -34,6 +34,11 @@ def startup():
 
 def set_real_settings(): # select settings for real data run
     settings = []
+    choice = {}
+    choice['1'] = "Low"
+    choice['2'] = "Medium"
+    choice['3'] = "High"
+    choice['4'] = "Random"
 
     while True:
         try:
@@ -43,7 +48,20 @@ def set_real_settings(): # select settings for real data run
         except:
             print('Enter an integer.')
 
-    stations = load_stations()
+    while True:
+        options = choice.keys()
+        for x in options:
+            print(x, choice[x])
+
+        selection = int(input("Target Distribution:"))
+        if 1 <= selection <= 4:
+            settings.append(selection)
+            break
+        else:
+            print('select again')
+
+    stations = load_stations()  # loads stations with specific target distribution
+    set_stations_t_distr(stations, settings[1])  # sets target distribution for stations
     users = load_users(stations, settings[0])
 
     compare_real(stations, users)
@@ -52,34 +70,37 @@ def set_real_settings(): # select settings for real data run
 def set_rand_settings():
     settings = []
     choice = {}
-    choice['1'] = "Default Priority (Difference/Distance)"
-    choice['2'] = "Distance Priority (Difference/Distance\u00b2)"
+    choice['1'] = "Low"
+    choice['2'] = "Medium"
+    choice['3'] = "High"
+    choice['4'] = "Random"
 
     # select settings
+    """while True:
+        try:
+            settings.append((int(input('How many stations would you like to create?:'))))  # 0
+            break
+        except:
+            print('Enter an integer.')"""
+
+    settings.append(1)
     while True:
         try:
-            settings.append((int(input('How many stations would you like to create?:'))))
+            settings.append(int(input('How many incoming users would you like to create?:')))  # 1
             break
         except:
             print('Enter an integer.')
 
     while True:
         try:
-            settings.append(int(input('How many incoming users would you like to create?:')))
+            settings.append(int(input('How many incoming users are we allowed to move?:')))  # 2
             break
         except:
             print('Enter an integer.')
 
     while True:
         try:
-            settings.append(int(input('How many incoming users are we allowed to move?:')))
-            break
-        except:
-            print('Enter an integer.')
-
-    while True:
-        try:
-            settings.append(int(input('Number of tests per run?:')))
+            settings.append(int(input('Number of tests per run?:')))  # 3
             break
         except:
             print('Enter an integer.')
@@ -89,92 +110,43 @@ def set_rand_settings():
         for x in options:
             print(x, choice[x])
 
-        selection = input("Select:")
-        if selection == '1':
-            settings.append(1)
-            break
-        elif selection == '2':
-            settings.append(2)
+        selection = int(input("Target Distribution:"))  # 4
+        if 1 <= selection <= 4:
+            settings.append(selection)
             break
         else:
             print('select again')
 
-    run_random(settings)
+    while True:
+        options = choice.keys()
+        for x in options:
+            print(x, choice[x])
 
-
-def run_random(settings): # runs with same random data
-    stats_sum = []
-    stats_avg = []
-    stats_dist = []
-    index = np.arange(settings[2]+1)
-    j_sum = []
-    j_avg = []
-    j_dist = []
-
-    targ = Station(lat=40.7127, lon=-74.0059)  # target is NYC
-
-    for j in range(settings[3]):  # run algorithm j times, i.e 50
-
-        stations = create_rand_stations(targ.lat, targ.lon, 2000, settings[0])  # create stations
-        users = create_rand_users(stations, settings[1])  # create users
-
-        kth_sum = []
-        kth_avg = []
-        kth_dist = []
-
-        for k in range(settings[2] + 1):  # run with same settings, k times, i.e users moved
-
-            if k == 0:  # run distribution 0 times if moving 0 users, else run distribution. then record data
-                distribute_random(stations, settings[4], 0)  # runs algorithm, rerouting a single user then recording data
-            else:
-                distribute_random(stations, settings[4])  # runs algorithm, rerouting a single user then recording data
-
-            sum = StationsDiff(stations)  # get sum of stations difference in stock before, per run
-            dist_rr = total_RR_distance(users) # get the total distance users were rerouted
-            avg = sum / len(stations)  # avg difference, per run
-
-            kth_sum.append(sum)
-            kth_avg.append(avg)
-            kth_dist.append(dist_rr)
-
-        j_sum = np.array(kth_sum)
-        j_avg = np.array(kth_avg)
-        j_dist = np.array(kth_dist)
-
-        if j == 0: # initialize np array if first run, then start adding
-            stats_sum = j_sum
-            stats_avg = j_avg
-            stats_dist = j_dist
+        selection = int(input("Current Distribution:"))  # 5
+        if 1 <= selection <= 4:
+            settings.append(selection)
+            break
         else:
-            stats_sum = np.add(stats_sum, j_sum)
-            stats_avg = np.add(stats_avg, j_avg)
-            stats_dist = np.add(stats_dist, j_dist)
+            print('select again')
 
-    stats_sum = np.divide(stats_sum, settings[3])
-    stats_avg = np.divide(stats_avg, settings[3])
-    stats_dist = np.divide(stats_dist, settings[3])
-
-    print(index, stats_sum, stats_avg, stats_dist)
-    create_lineplot(index, stats_sum, stats_avg, stats_dist)  # create plot here
+    stations = load_stations()  # create an instance of stations with curr/target amt
+    compare_random(stations, settings)
 
 
-def run_real(stations, users,  p):  # runs with real dataset
+def run_random(stations, users, settings, p):  # runs with same random data
 
-    # stations = load_stations() only use if not passing stations/ users
-    # users = load_users(stations, settings[0])
-    sum = StationsDiff(stations)  # get sum of stations difference in stock before, per run
+    sum = StationsDiff(stations)  # get sum of stations difference in stock before run
     dist_rr = total_RR_distance(users)  # get the total distance users were rerouted
-    avg = sum / len(stations)  # avg difference, per run
+    avg = sum / len(stations)  # avg difference rerouted
 
     stats_sum = [sum]
     stats_avg = [avg]
     stats_dist = [dist_rr]
-    # index = np.arange(len(users)+1)
 
-    for k in range(len(users)):  # run with real data
+    for k in range(settings[2]):  # users allowed to move
 
         if meetsTarget(stations) is False:  # run distribution if stations don't meet targets
-            distribute_real(stations, p)  # runs algorithm, rerouting a single user then recording data
+            distribute_single(stations, p)  # runs algorithm, rerouting a single user then recording data
         else:
             print('stations MEET targets')
 
@@ -186,8 +158,68 @@ def run_real(stations, users,  p):  # runs with real dataset
         stats_avg.append(avg)
         stats_dist.append(dist_rr)
 
+    return [stats_sum, stats_avg, stats_dist]  # return instance j's stats for priority x
+
+
+def run_real(stations, users,  p):  # runs with real dataset
+
+    sum = StationsDiff(stations)  # get sum of stations difference in stock before run
+    dist_rr = total_RR_distance(users)  # get the total distance users were rerouted
+    avg = sum / len(stations)  # avg difference, per run
+
+    stats_sum = [sum]
+    stats_avg = [avg]
+    stats_dist = [dist_rr]
+
+    for k in range(len(users)):  # run with real data
+
+        if meetsTarget(stations) is False:  # run distribution if stations don't meet targets
+            distribute_single(stations, p)  # runs algorithm, rerouting a single user then recording data
+        else:
+            print('stations MEET targets')
+
+        sum = StationsDiff(stations)  # get sum of stations difference in stock
+        dist_rr = total_RR_distance(users)  # get the total distance users were rerouted
+        avg = sum / len(stations)  # avg difference, per run
+
+        stats_sum.append(sum)
+        stats_avg.append(avg)
+        stats_dist.append(dist_rr)
+
     return [stats_sum, stats_avg, stats_dist]
 
+
+def compare_random(stations, settings):
+    stats_sum = np.array([[0]*(settings[1]+1)]*6)  # initialize stat arrays
+    stats_avg = np.array([[0]*(settings[1]+1)]*6)
+    stats_dist = np.array([[0]*(settings[1]+1)]*6)
+    index = np.arange(settings[1]+1)
+
+    for j in range(settings[3]):  # run algorithm j times, i.e 50
+        set_stations_t_distr(stations, settings[4])  # reset the target distribution
+        set_stations_c_distr(stations, settings[5])  # reset the current distribution
+        delete_inc(stations)  # clear users from stations
+        users = create_rand_users(stations, settings[1])  # create random incoming users to stations
+
+        for x in range(6):  # runs algorithm with different priority, starts fresh each time
+            reset_users(users)  # reset users back to original positions
+            stats = run_random(stations, users, settings, x)  # run alg and gather data for priority x
+            print(stats_sum)
+            print(stats[0])
+            stats_sum[x] = np.add(stats_sum[x], stats[0])  # record instance data
+            print(stats_sum)
+            stats_avg[x] = np.add(stats_avg[x], stats[1])
+            stats_dist[x] = np.add(stats_dist[x], stats[2])
+
+    delete_inc(stations)  # clear users from stations
+
+    stats_sum = stats_sum / settings[3]
+    stats_avg = stats_avg / settings[3]
+    stats_dist = stats_dist / settings[3]
+
+    print(stats_sum)
+    print(index)
+    compare_lineplot(index, stats_sum, stats_avg, stats_dist)  # create plot here
 
 
 def compare_real(stations, users):  # runs and compares real data against the different priority options
@@ -197,12 +229,11 @@ def compare_real(stations, users):  # runs and compares real data against the di
     index = np.arange(len(users)+1)
 
     for x in range(6):  # runs algorithm with different prio, starts fresh each time
-        if x != 0:
-            reset_users(users)  # reset users back to original positions
         stats = run_real(stations, users, x)  # run alg and gather data for priority x
         stats_sum.append(stats[0])  # fill data into arrays to use to create plots
         stats_avg.append(stats[1])
         stats_dist.append(stats[2])
+        reset_users(users)  # reset users back to original positions
 
     stats_sum = np.array(stats_sum)
     stats_avg = np.array(stats_avg)
@@ -260,9 +291,25 @@ def compare_lineplot(index, sum, avg, dist):
 
 
 def test():
-    set_real_settings()
+    s = Station()
+    s1 = Station()
+    s2 = Station()
 
+    stations = [s, s1, s2]
+    users = create_rand_users(stations,5)
 
-test()
+    s.print_info()
+    s1.print_info()
+    s2.print_info()
+    print(s.getdiff()+s1.getdiff()+s2.getdiff())
+    delete_inc(stations)
+    users = create_rand_users(stations, 5)
+
+    s.print_info()
+    s1.print_info()
+    s2.print_info()
+    print(s.getdiff() + s1.getdiff() + s2.getdiff())
+
+startup()
 
 

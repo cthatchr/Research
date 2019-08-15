@@ -5,7 +5,7 @@ from StationDW import *
 from DistList import *
 
 
-def distribute_random(stations, priority=0, k=1):
+def distribute_multiple_old(stations, priority=0, k=1):
     i = 0
     target = None
     # distribute k users
@@ -62,7 +62,7 @@ def distribute_random(stations, priority=0, k=1):
         rr_user.rerouted = True
 
 
-def distribute_real(stations, priority):
+def distribute_single(stations, priority):
     target = None
     # loop through stations to SET TARGET STATION
     for x in stations:  # set target station to one farthest from target amount, lowest diff
@@ -80,17 +80,19 @@ def distribute_real(stations, priority):
 
     # ASSIGN STATION TO REROUTE FROM if priority is smaller than others and station has incoming users that can be rerouted
     rr = None
-    for y in dlist:  # checks if the station has an incoming reroutable user, skips otherwise
-        if y.station.has_rr_user() is True:
-            if rr is None:  # if not already assigned then assign
-                rr = y
-            elif (y.priority > rr.priority) and priority != 3:  # choose the highest priority station
-                rr = y
-            elif (y.priority < rr.priority) and priority == 3:  # if priority is only_distance choose lowest instead
-                rr = y
+    for y in dlist:
+        if y.station.has_rr_user() is True:  # checks if the station has an incoming reroutable user, skips otherwise
+            if y.station.getdiff() > target.getdiff():  # checks if the differences are the same, if so it skips
+                if rr is None:  # if not already assigned then assign
+                    rr = y
+                elif (y.priority > rr.priority) and priority != 3:  # choose the highest priority station
+                    rr = y
+                elif (y.priority < rr.priority) and priority == 3:  # if priority is only_distance choose lowest instead
+                    rr = y
 
     # if there are no stations to take reroutable users from, i.e. target station has the only ones, stop algorithm
-    if rr is None:
+    if (rr is None):
+        print('rr is None')
         return
     rr_station = rr.station  # assign rerouted station from distance pairings
     rr_user = rr_station.get_rr_user()  # get incoming user to reroute to target station

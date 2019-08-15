@@ -109,3 +109,4 @@ def reset_users(users):  # resets the users so we can run the algorithm fresh
             x.rr_end = None  # reset users rerouted station
             x.end.inc.append(x)  # add user back to original stations incoming
             x.rerouted = False
+

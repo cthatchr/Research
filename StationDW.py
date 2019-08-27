@@ -17,6 +17,9 @@ class StationDW:
         s = self.station
         self.priority = pow(s.getdiff(), 2) / self.dist
 
+        if s.is_surplus_or_deficit is -1:  # if the station has a deficit set the priority to negative
+            self.priority = -self.priority
+
     def only_distance(self):  # priority becomes the distance between stations, lowest
         self.priority = self.dist
 

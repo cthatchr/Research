@@ -104,6 +104,77 @@ def distribute_single(stations, priority):
     rr_user.rerouted = True
 
 
+def distribute(stations, priority):
+    target = get_target_station(stations)  # get target station
+    # create list of stations with distance pairings near target
+    dl = DistList(priority)
+    dl.fill(stations, target)
+    dlist = dl.distList
+
+    if stations_has_rr_user(stations) is False: # if no stations with reroutable users then the algorithm stops
+        return
+
+    if target.is_deficit():  # when target station has a deficit, get rrst to reroute user to target
+        rrst = get_reroute_station_for_deficit(dlist, target)  # assign reroute station for target station
+        reroute_user(target, rrst)  # reroute user
+    elif target.is_surplus():  # when target station has a surplus, get rrst to reroute user from target
+        rrst = get_reroute_station_for_surplus(dlist, target)  # assign reroute station for target station
+        reroute_user(rrst, target)  # reroute user
+    else:
+        print('Target stations diff is 0')
+
+
+def get_target_station(stations):  # grabs the station with the highest |difference| to be our target station
+    target = None
+    for x in stations:
+        if target is None:
+            if x.is_surplus() and x.has_rr_user():  # if the target has a surplus, must have a rr user to be target
+                target = x
+            elif x.is_deficit():
+                target = x
+        elif x.getdiff(absval=True) > target.getdiff(abnsval=True):  # set new target if |diff| is larger than curr
+            if x.is_surplus() and x.has_rr_user():  # if the target has a surplus, must have a rr user to be target
+                target = x
+            elif x.is_deficit():
+                target = x
+    return target
+
+
+def get_reroute_station_for_deficit(dlist, target):  # gets rr station for target station that has deficit
+    rr = None
+    for y in dlist:
+        s = y.station
+        if s.has_rr_user():  # check to make sure station has a rerouteable user
+            if s.getdiff() > target.getdiff():  # (s.getdiff() > target.getdiff()) and s.is_surplus()
+                if rr is None:
+                    rr = y
+                elif y.priority > rr.priority:  # if iterations priority > best so far, set as new best
+                    rr = y
+    return rr.station
+
+
+def get_reroute_station_for_surplus(dlist, target):  # gets rr station for target station that has surplus
+    rr = None
+    for y in dlist:
+        s = y.station
+        if s.getdiff() < target.getdiff():  # diff must be less than target diff
+            if rr is None:
+                rr = y
+            # this is where different priority checks would be placed
+            elif y.priority < rr.priority:  # if iterations priority > best so far, set as new best
+                rr = y
+    return rr.station
+
+
+def reroute_user(to, frm):  # reroutes user from (frm) one station to another (to)
+    user = frm.get_rr_user()  # get incoming user to reroute
+
+    # reroute user to target station(remove+append) then mark them rerouted
+    frm.inc.remove(user)
+    to.inc.append(user)
+    user.rr_end = to
+    user.rerouted = True
+
 
 def meetsTarget(stations):
     check = False

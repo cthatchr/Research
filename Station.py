@@ -72,6 +72,25 @@ class Station:
             if z.rerouted is False:
                 return z
 
+    def is_surplus_or_deficit(self):  # returns d if deficit, s if surplus, 0 if no diff
+        if self.getdiff() > 0:  # if surplus
+            return 's'
+        elif self.getdiff() < 0:  # if deficit
+            return 'd'
+        elif self.getdiff() == 0:  # no diff
+            return 0
+
+    def is_surplus(self):
+        if self.getdiff() > 0:
+            return True
+        else:
+            return False
+
+    def is_deficit(self):
+        if self.getdiff() < 0:
+            return True
+        else:
+            return False
 
 # creates n amount of stations around a target coordinate
 def create_rand_stations(lat, lon, radius, amount, distribution_type=4, max=10):
@@ -105,17 +124,23 @@ def load_stations():  # loads stations from json data
     return stations
 
 
-def set_stations_t_distr(stations, target_distr_type=4):
+def is_surplus_and_has_rr_user(s):  # checks if a station that has a surplus
+    if s.is_surplus_or_deficit is 's' and s.has_rr_user():
+        return True
+    else:
+        return False
+
+def set_stations_t_distr(stations, target_distr_type=4):  # sets stations target amt given distribution type
     for x in stations:
         set_target_distribution(x, target_distr_type)
 
 
-def set_stations_c_distr(stations, curr_distr_type=4):
+def set_stations_c_distr(stations, curr_distr_type=4):  # sets stations current amt given distribution type
     for x in stations:
         set_curr_distribution(x, curr_distr_type)
 
-# checks if ANY of the stations have a reroutable user, true if they do
-def stations_has_rr_user(stations):
+
+def stations_has_rr_user(stations):  # checks if ANY of the stations have a reroutable user, true if they do
     check = False
     for x in stations:
         if x.has_rr_user():
@@ -148,7 +173,6 @@ def set_target_distribution(station, dist_type):  # sets stations target amount;
         station.target = random.randint(0, max)
 
 
-# might want to add current distribution that works off of the target amount***
 def set_curr_distribution(station, dist_type):  # sets stations current amount; low, medium, high, or random
     max = station.max
     half = int(round(max/2))
@@ -167,6 +191,6 @@ def set_curr_distribution(station, dist_type):  # sets stations current amount; 
         station.curr = random.randint(0, max)
 
 
-def delete_inc(stations):
+def delete_inc(stations):  # deletes incoming users from stations
     for x in stations:
         x.inc.clear()

@@ -11,11 +11,13 @@ import json
 from pandas.io.json import json_normalize
 from datetime import datetime
 import copy
+import folium as fl
 
 def startup():
     choice = {}
     choice['1'] = "Random Data"
     choice['2'] = "Real Data"
+    choice['3'] = "Current Testing"
 
     while True:
         options = choice.keys()
@@ -28,6 +30,9 @@ def startup():
             break
         elif selection == '2':
             set_real_settings()
+            break
+        elif selection == '3':
+            curr_settings()
             break
         else:
             print('select again')
@@ -62,7 +67,7 @@ def set_real_settings(): # select settings for real data run
 
     stations = load_stations()  # loads stations with specific target distribution
     set_stations_t_distr(stations, settings[1])  # sets target distribution for stations
-    users = load_users(stations, settings[0])
+    users = load_users_time(stations, settings[0])
 
     compare_real(stations, users)
     # run_real(settings)
@@ -146,7 +151,7 @@ def run_random(stations, users, settings, p):  # runs with same random data
     for k in range(settings[2]):  # users allowed to move
 
         if meetsTarget(stations) is False:  # run distribution if stations don't meet targets
-            distribute_single(stations, p)  # runs algorithm, rerouting a single user then recording data
+            distribute(stations, p)  # runs algorithm, rerouting a single user then recording data
         else:
             print('stations MEET targets')
 
@@ -174,7 +179,7 @@ def run_real(stations, users,  p):  # runs with real dataset
     for k in range(len(users)):  # run with real data
 
         if meetsTarget(stations) is False:  # run distribution if stations don't meet targets
-            distribute_single(stations, p)  # runs algorithm, rerouting a single user then recording data
+            distribute(stations, p)  # runs algorithm, rerouting a single user then recording data
         else:
             print('stations MEET targets')
 
@@ -204,10 +209,8 @@ def compare_random(stations, settings):
         for x in range(6):  # runs algorithm with different priority, starts fresh each time
             reset_users(users)  # reset users back to original positions
             stats = run_random(stations, users, settings, x)  # run alg and gather data for priority x
-            print(stats_sum)
-            print(stats[0])
+
             stats_sum[x] = np.add(stats_sum[x], stats[0])  # record instance data
-            print(stats_sum)
             stats_avg[x] = np.add(stats_avg[x], stats[1])
             stats_dist[x] = np.add(stats_dist[x], stats[2])
 
@@ -217,8 +220,6 @@ def compare_random(stations, settings):
     stats_avg = stats_avg / settings[3]
     stats_dist = stats_dist / settings[3]
 
-    print(stats_sum)
-    print(index)
     compare_lineplot(index, stats_sum, stats_avg, stats_dist)  # create plot here
 
 
@@ -290,6 +291,134 @@ def compare_lineplot(index, sum, avg, dist):
     plt.show()
 
 
+def create_dist_plot(index, dist):
+    # user distance moved
+    plt.figure()
+    plt.title('Distance Users Rerouted')
+    plt.xlabel('Users Rerouted')
+    plt.ylabel('Distance(Meters)')
+    plt.plot(index, dist[0], label='Default')
+    plt.plot(index, dist[1], label='Distance^2')
+    plt.plot(index, dist[2], label='Difference^2')
+    plt.plot(index, dist[3], label='Only Distance')
+    plt.plot(index, dist[4], label='Only Difference')
+    plt.plot(index, dist[5], label='Random')
+    plt.locator_params(axis='y', nbins=5)
+    plt.legend()
+    plt.show(block=False)
+
+
+def curr_settings():  # current build for testing purposes
+    t = (39.953555, -75.164042)
+    settings = []
+    choice = {}
+    choice['1'] = "Distance Constraint"
+    choice['2'] = "No Distance Constraint"
+    choice['3'] = "Compare"
+
+
+    while True:
+        try:
+            settings.append((int(input('How many users would you like to create and reroute?:'))))
+            break
+        except:
+            print('Enter an integer.')
+
+    while True:
+        options = choice.keys()
+        for x in options:
+            print(x, choice[x])
+
+        selection = input("Select:")
+        if selection == '1':  # with a distance constraint
+            settings.append((int(input('Distance?:'))))
+            stations = load_stations()  # loads stations, their target = curr
+            # filter_stations(stations, 1000, t)  # filters out farther stations
+            variance = create_sd_dist(settings[0],
+                                      stations)  # figure out stations target(i.e. their surplus and deficit)
+            users = dist_users(variance, stations)
+            compare_curr(stations, users, settings[1])
+            break
+        elif selection == '2':  # no distance constraint
+            settings.append(None)
+            stations = load_stations()  # loads stations, their target = curr
+            # filter_stations(stations, 1000, t)  # filters out farther stations
+            variance = create_sd_dist(settings[0],
+                                      stations)  # figure out stations target(i.e. their surplus and deficit)
+            users = dist_users(variance, stations)
+            compare_curr(stations, users, settings[1])
+            break
+        elif selection == '3': # compare run with and without a distance constraint
+            settings.append((int(input('Distance?:'))))
+
+            stations = load_stations()  # loads stations, their target = curr
+            # filter_stations(stations, 1000, t)  # filters out farther stations
+            variance = create_sd_dist(settings[0],
+                                      stations)  # figure out stations target(i.e. their surplus and deficit)
+            users = dist_users(variance, stations)
+            compare_curr(stations, users, None)
+            reset_users(users)
+            compare_curr(stations, users, settings[1])
+            break
+        else:
+            print('select again')
+    plt.show()
+    """stations = load_stations()  # loads stations, their target = curr
+    # filter_stations(stations, 1000, t)  # filters out farther stations
+    variance = create_sd_dist(settings[0], stations)    # figure out stations target(i.e. their surplus and deficit)
+    users = dist_users(variance, stations)
+
+    compare_curr(stations, users)"""
+
+
+def compare_curr(stations, users, constraint):
+    stats_sum = []
+    stats_avg = []
+    stats_dist = []
+    index = np.arange(len(users) + 1)
+
+    for x in range(6):  # runs algorithm with different prio, starts fresh each time
+        stats = run_curr(stations, users, x, constraint)  # run alg and gather data for priority x
+        stats_sum.append(stats[0])  # fill data into arrays to use to create plots
+        stats_avg.append(stats[1])
+        stats_dist.append(stats[2])
+        reset_users(users)  # reset users back to original positions
+
+    stats_sum = np.array(stats_sum)
+    stats_avg = np.array(stats_avg)
+    stats_dist = np.array(stats_dist)
+
+    print(stats_sum)
+    create_dist_plot(index, stats_dist)  # create plot here
+
+
+def run_curr(stations, users, p, constraint):
+    sum = StationsDiff(stations)  # get sum of stations difference in stock before run
+    dist_rr = total_RR_distance(users)  # get the total distance users were rerouted
+    avg = sum / len(stations)  # avg difference, per run
+
+    stats_sum = [sum]
+    stats_avg = [avg]
+    stats_dist = [dist_rr]
+
+    for k in range(len(users)):  # run with real data
+
+        if meetsTarget(stations) is False:  # run distribution if stations don't meet targets
+            distribute(stations, p, constraint)  # runs algorithm, rerouting a single user then recording data
+        else:
+            print('stations MEET targets')
+
+        sum = StationsDiff(stations)  # get sum of stations difference in stock
+        dist_rr = total_RR_distance(users)  # get the total distance users were rerouted
+        avg = sum / len(stations)  # avg difference, per run
+
+        stats_sum.append(sum)
+        stats_avg.append(avg)
+        stats_dist.append(dist_rr)
+
+    return [stats_sum, stats_avg, stats_dist]
+
+
 def test():
     s = Station()
     s1 = Station()
@@ -309,6 +438,23 @@ def test():
     s1.print_info()
     s2.print_info()
     print(s.getdiff() + s1.getdiff() + s2.getdiff())
+
+""""
+# s = create_rand_stations(0.000000, 0.000000, 1000, 10)
+t = (39.953555, -75.164042)
+s = load_stations()
+# print(len(s))
+filter_stations(s, 1000, t)
+# print(len(s))
+
+for x in s:
+    print(x.getdiff())
+variance = create_sd_dist(10, s)
+print(variance)
+dist_users(variance, s)
+for x in s:
+    print(x.getdiff())
+"""
 
 startup()
 

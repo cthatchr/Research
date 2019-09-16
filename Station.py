@@ -2,7 +2,10 @@ import random
 import math
 import json
 import pandas as pd
+from geopy import distance
 from pandas.io.json import json_normalize
+import numpy as np
+from DistList import *
 
 class Station:
     def __init__(self, id='S', lat=0, lon=0, max=10, curr=0, target=2):
@@ -92,6 +95,7 @@ class Station:
         else:
             return False
 
+
 # creates n amount of stations around a target coordinate
 def create_rand_stations(lat, lon, radius, amount, distribution_type=4, max=10):
     stations = []
@@ -99,10 +103,10 @@ def create_rand_stations(lat, lon, radius, amount, distribution_type=4, max=10):
         id = 'S' + str(x+1)
         # gives a random current amount between 0 and max (can be changed)
         curr = random.randint(0, max-1)
-        # gives a random target amount between 3 and max-2 (can be changed)
-        targ = random.randint(3, max)
+        """"# gives a random target amount between 3 and max-2 (can be changed)
+        targ = random.randint(3, max)"""
         # create Station
-        s = Station(id=id, target=targ, curr=curr)
+        s = Station(id=id, target=curr, curr=curr)  # target = curr
         s.rand_coord(lat, lon, radius)
         stations.append(s)
     return stations
@@ -119,9 +123,28 @@ def load_stations():  # loads stations from json data
                     lat=row['properties.latitude'],
                     lon=row['properties.longitude'],
                     max=row['properties.totalDocks'],
-                    curr=row['properties.bikesAvailable'])
+                    curr=row['properties.bikesAvailable'],
+                    target=row['properties.bikesAvailable'])
         stations.append(s)
     return stations
+
+
+def filter_stations(stations, filter, target):
+    k = 0
+    """for x in stations:
+        k += 1
+        loc = (x.lat, x.lon)
+        dist = distance.distance(loc, target).meters
+        if dist > filter:
+            print('X')
+        print(k, dist)
+    k=0"""
+    stations[:] = [y for y in stations if distance.distance((y.lat, y.lon), target).meters < filter]
+    """for x in stations:
+        k += 1
+        loc = (x.lat, x.lon)
+        dist = distance.distance(loc, target).meters
+        print(k, dist)"""
 
 
 def is_surplus_and_has_rr_user(s):  # checks if a station that has a surplus
@@ -129,6 +152,7 @@ def is_surplus_and_has_rr_user(s):  # checks if a station that has a surplus
         return True
     else:
         return False
+
 
 def set_stations_t_distr(stations, target_distr_type=4):  # sets stations target amt given distribution type
     for x in stations:
@@ -153,6 +177,36 @@ def get_station_by_id(stations, id):
         if x.id == id:
             return x
             break
+
+
+def create_sd_dist(amount, stations):  # returns an array which represents each stations surplus and deficit
+    v = np.zeros(len(stations), dtype=int)
+    def_amt = amount
+    sur_amt = amount
+    while (def_amt > 0) or (sur_amt > 0):  # while there is still variances to assign
+        num = np.random.randint(len(stations))  # randomly choose a 'station' to iterate + or -
+        if v[num] == 0:  # if no variance is set,
+            if (def_amt > 0) and (sur_amt > 0):  # randomly choose + or -
+                ht = np.random.randint(2)
+            elif def_amt is 0:  # if no more deficit iters, choose surplus
+                ht = 1
+            elif sur_amt is 0:  # if no more surplus iters, choose deficit
+                ht = 0
+
+            if ht is 1:  # choose as surplus while there is remaining amt
+                v[num] += 1
+                sur_amt -= 1
+            elif ht is 0:  # choose as deficit while there is remaining amt
+                v[num] -= 1
+                def_amt -= 1
+
+        elif (v[num] > 0) and (sur_amt > 0) :  # if variance is already surplus
+            v[num] += 1
+            sur_amt -= 1
+        elif (v[num] < 0) and (def_amt > 0):  # if variance is already deficit
+            v[num] -= 1
+            def_amt -= 1
+    return v
 
 
 def set_target_distribution(station, dist_type):  # sets stations target amount; low, medium, high, or random
@@ -194,3 +248,14 @@ def set_curr_distribution(station, dist_type):  # sets stations current amount; 
 def delete_inc(stations):  # deletes incoming users from stations
     for x in stations:
         x.inc.clear()
+
+
+def get_average_distance(stations):
+    distance_sum = 0
+    for x in stations:
+        dl = DistList(0)
+        dl.fill_distance(stations, x)
+        for y in dl.distList:
+            distance_sum += y.dist
+    average = distance_sum/(len(stations)*(len(stations)-1))
+    return average

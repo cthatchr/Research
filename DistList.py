@@ -22,6 +22,16 @@ class DistList:
         self.changePriority(self.priority_used)  # uses priority specified
         # self.distList.sort(key=lambda StationDW: StationDW.dist)  # sort
 
+    def fill_distance(self, stations, target):
+        length = len(stations)
+        targetLoc = (target.lat, target.lon)
+        for x in range(length):  # creates a list excluding the target station
+            if stations[x] != target:
+                loc = (stations[x].lat, stations[x].lon)
+                dist = distance.distance(loc, targetLoc).meters
+                y = StationDW(stations[x], dist)
+                self.distList.append(y)
+
     # filter out stations outside the radius
     def distFilter(self, radius):
         flist = self.distList

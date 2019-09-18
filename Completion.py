@@ -41,12 +41,8 @@ def curr_settings():  # current build for testing purposes
 
 
 def run_curr(stations, users, p, constraint):
-    # sum = StationsDiff(stations)  # get sum of stations difference in stock before run
     dist_rr = total_RR_distance(users)  # get the total distance users were rerouted
-    # avg = sum / len(stations)  # avg difference, per run
 
-    # stats_sum = [sum]
-    # stats_avg = [avg]
     stats_dist = [dist_rr]
 
     for k in range(len(users)):  # run with real data
@@ -68,15 +64,15 @@ def run_curr(stations, users, p, constraint):
     return [stats_dist]
 
 
-def compare_curr(settings):
+def compare_curr(settings, k=5):
+    j = 0
+    failed = False
     t = (39.953555, -75.164042)
     amt_users = settings[0]+1
-    # stats_sum = np.array([[0] * amt_users] * 6)  # initialize stat arrays
-    # stats_avg = np.array([[0] * amt_users] * 6)
     stats_dist = np.array([[0] * amt_users] * 6)
     index = np.arange(amt_users)
 
-    for j in range(5):  # run algorithm 5 times
+    while j < k:  # run algorithm k times
 
         stations = load_stations()  # loads stations, their target = curr
         filter_stations(stations, 1000, t)  # filters out farther stations
@@ -85,63 +81,81 @@ def compare_curr(settings):
         users = dist_users(variance, stations)
 
         if settings[1] is True:
-            constraint = get_average_distance(stations)
+            constraint = get_average_distance(stations)*1.5
         else:
             constraint = False
 
+        temp_stats = np.array([[0] * amt_users] * 6)
+
         for x in range(6):  # runs algorithm with different prio, starts fresh each time
             stats = run_curr(stations, users, x, constraint)  # run alg and gather data for priority x with constraint
-            if stats is 0:
-                print('Cannot distribute due to distance constraint')
-                return
-            # stats_sum[x] = np.add(stats_sum[x], stats[0])  # record instance data
-            # stats_avg[x] = np.add(stats_avg[x], stats[1])
-            stats_dist[x] = np.add(stats_dist[x], stats)
-            reset_users(users)  # reset users back to original positions
+            if stats is 0:  # if instance fails stop and make a new one
+                print('Failed on priority #',x,'. Creating new instance')
+                failed = True
+                break
+            else:  # else keep going
+                temp_stats[x] = np.add(temp_stats[x], stats)
+                reset_users(users)  # reset users back to original positions
+                failed = False
 
+        if failed is False:
+            stats_dist = np.add(stats_dist, temp_stats)
+            j += 1
+            print('Found passing instance #', j)
 
         delete_inc(stations)  # clear users from stations
 
-    # stats_sum = stats_sum / 5
-    # stats_avg = stats_avg / 5
-    stats_dist = stats_dist / 5
+    stats_dist = stats_dist / k
 
     create_dist_plot(index, stats_dist)  # create plot here
 
 
-def compare_curr_both(settings):
+def compare_curr_both(settings, k=5):
+    j = 0
+    failed = False
     t = (39.953555, -75.164042)
     amt_users = settings[0] + 1
     stats_dist_constraint = np.array([[0] * amt_users] * 6)  # initialize stat arrays
     stats_dist = np.array([[0] * amt_users] * 6)
     index = np.arange(amt_users)
 
-    for j in range(5):  # run algorithm 5 times
-        failed = False
+    while j < k:  # run algorithm k times
+
         stations = load_stations()  # loads stations, their target = curr
-        # filter_stations(stations, 1000, t)  # filters out farther stations
+        filter_stations(stations, 1000, t)  # filters out farther stations
         variance = create_sd_dist(settings[0],
                                   stations)  # figure out stations target(i.e. their surplus and deficit)
         users = dist_users(variance, stations)
+        constraint = get_average_distance(stations) * 1.5
+
+        temp_constraint = np.array([[0] * amt_users] * 6)  # initialize stat arrays
+        temp_stats = np.array([[0] * amt_users] * 6)
 
         for x in range(6):  # runs algorithm with different prio, starts fresh each time
             stats = run_curr(stations, users, x, False)  # run alg and gather data for priority x without constraint
-            stats_dist[x] = np.add(stats_dist[x], stats)  # record instance data
+            temp_stats[x] = np.add(temp_stats[x], stats)  # record instance data
             reset_users(users)  # reset users back to original positio
 
-            if failed is False:
-                stats = run_curr(stations, users, x, get_average_distance(stations))  # run alg and gather data for priority x with constraint
-                if stats is 0:
-                    print('Distribution failed due to distance constraint')
-                    failed = True
-                else:
-                    stats_dist_constraint[x] = np.add(stats_dist[x], stats)  # record instance data
+            stats = run_curr(stations, users, x, constraint)  # run alg and gather data for priority x with constraint
+            if stats is 0:  # if instance fails stop and make a new one
+                print('Failed on priority #', x, '. Creating new instance')
+                failed = True
+                break
+            else:
+                temp_constraint[x] = np.add(temp_constraint[x], stats)  # record instance data
                 reset_users(users)  # reset users back to original positions
+                failed = False
+
+        if failed is False:
+            stats_dist = np.add(stats_dist, temp_stats)
+            stats_dist_constraint = np.add(stats_dist_constraint, temp_constraint)
+            j += 1
+            print('Found passing instance #', j)
 
         delete_inc(stations)  # clear users from stations
 
-    stats_dist = stats_dist / 5
-    stats_dist_constraint = stats_dist / 5
+    stats_dist = stats_dist / k
+    stats_dist_constraint = stats_dist / k
 
     create_dist_plot(index, stats_dist)  # create plot without constraint
     create_dist_plot(index, stats_dist_constraint)  # create plot with constraint

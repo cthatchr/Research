@@ -155,7 +155,7 @@ def compare_curr_both(settings, k=5):
         delete_inc(stations)  # clear users from stations
 
     stats_dist = stats_dist / k
-    stats_dist_constraint = stats_dist / k
+    stats_dist_constraint = stats_dist_constraint / k
 
     create_dist_plot(index, stats_dist)  # create plot without constraint
     create_dist_plot(index, stats_dist_constraint)  # create plot with constraint

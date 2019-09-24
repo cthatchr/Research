@@ -259,3 +259,9 @@ def get_average_distance(stations):
             distance_sum += y.dist
     average = distance_sum/(len(stations)*(len(stations)-1))
     return average
+
+
+def get_distance(st1, st2):
+    loc1 = (st1.lat, st1.lon)
+    loc2 = (st2.lat, st2.lon)
+    return distance.distance(loc1, loc2).meters

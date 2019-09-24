@@ -22,6 +22,10 @@ def startup():
     choice['1'] = "Random Data"
     choice['2'] = "Real Data"
     choice['3'] = "Completion"
+    choice1 = {}
+    choice1['1'] = "Greedy"
+    choice1['2'] = "Min Cost Flow"
+    choice1['3'] = "Compare Both"
 
     while True:
         options = choice.keys()
@@ -36,7 +40,24 @@ def startup():
             set_real_settings()
             break
         elif selection == '3':
-            curr_settings()
+
+            while True:
+                options = choice1.keys()
+                for x in options:
+                    print(x, choice1[x])
+
+                selection = input("Select:")
+                if selection == '1':  # greedy
+                    greedy_settings()
+                    break
+                elif selection == '2':  # mcf
+                    mcf_settings()
+                    break
+                elif selection == '3':  # both
+
+                    break
+                else:
+                    print('select again')
             break
         else:
             print('select again')

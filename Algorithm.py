@@ -204,3 +204,4 @@ def StationsDiff(stations):
     for x in stations:
         total += x.getdiff(absval=True)
     return total
+

@@ -111,6 +111,12 @@ def create_rand_stations(lat, lon, radius, amount, distribution_type=4, max=10):
         stations.append(s)
     return stations
 
+def load_df():
+    with open('indego_stationdata.json') as d:  # reads json data from file
+        data = json.load(d)
+    df = pd.DataFrame(data['features'])  # turns json data into Dataframe to work off of
+    dfd = json_normalize(df['properties'])  # normalizes json data
+    return dfd
 
 def load_stations():  # loads stations from json data
     stations = []
@@ -179,7 +185,56 @@ def get_station_by_id(stations, id):
             break
 
 
-def create_sd_dist(amount, stations):  # returns an array which represents each stations surplus and deficit
+def sd_dist(amount, stations, type = 'U'):
+    amt = len(stations)
+    users = amount  # the amount of users we plan the create and reroute
+
+    if type is 'U':  # uniform
+        s = np.random.uniform(-1, 1, size=amt)
+    elif type is 'E':  # exponential
+        s = np.random.exponential(-1, 1, size=amt)
+    elif type is 'N':  # normal
+        s = np.random.normal(-1, 1, size=amt)
+    elif type is 'R':  # random
+        s = 2 * (np.random.random_sample(size=amt) - 0.5)
+    sur_total = 0
+    def_total = 0
+    for x in s:
+        if x > 0:
+            sur_total += x
+        if x < 0:
+            def_total += x
+
+    variance = np.zeros(amt)  # normalize distribution
+    for x in range(len(s)):
+        if s[x] > 0:  # if +
+            variance[x] = (s[x] / sur_total)*users
+        if s[x] < 0:  # if -
+            variance[x] = -(s[x] / def_total)*users
+
+    def_amt = users
+    sur_amt = users
+    v = np.zeros(len(stations), dtype=int)
+    while (def_amt > 0) or (sur_amt > 0):  # while there is still variances to assign
+        for x in range(len(variance)):
+            n = random.uniform(0, 1)
+            if (variance[x] > 0) and (sur_amt > 0):  # if + and has amt to distribute
+                if n < variance[x]:
+                    v[x] += 1
+                    sur_amt -= 1
+                    # variance[x] -= n
+            elif (variance[x] < 0) and (def_amt > 0):  # if - and has amt to distribute
+                if n < -(variance[x]):
+                    v[x] -= 1
+                    def_amt -= 1
+                    # variance[x] += n
+
+    print(v)
+    print(sum(v))
+    return v
+
+
+def create_sd_dist_old(amount, stations):  # returns an array which represents each stations surplus and deficit
     v = np.zeros(len(stations), dtype=int)
     def_amt = amount
     sur_amt = amount

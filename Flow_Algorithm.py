@@ -41,12 +41,12 @@ def min_cost_alg(stations, users, constraint):
                 # Arcs in the solution have a flow value of 1. Their start and end nodes
                 # give an assignment of worker to task.
 
-                if mcf.Flow(arc) > 0:
+                '''if mcf.Flow(arc) > 0:
                     print('%d user(s) from Station %d rerouted to station %d. Distance = %d' % (
                         mcf.Flow(arc),
                         mcf.Tail(arc),
                         mcf.Head(arc),
-                        mcf.UnitCost(arc)))
+                        mcf.UnitCost(arc)))'''
         print('Total distance = ', mcf.OptimalCost())
         print()
         return mcf.OptimalCost()
@@ -136,6 +136,7 @@ def set_supplies(surplus, deficit, amount):
     supplies += [0]*len(deficit)
     supplies += [-amount]
     return supplies
+
 
 def print_flow(surplus, deficit):
     for x in surplus:

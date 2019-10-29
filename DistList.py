@@ -4,6 +4,7 @@ from User import *
 from StationDW import *
 # given a station return a list of station with corresponding distance to station
 
+
 class DistList:
     def __init__(self, priority):
         self.distList = []
@@ -31,27 +32,6 @@ class DistList:
                 dist = distance.distance(loc, targetLoc).meters
                 y = StationDW(stations[x], dist)
                 self.distList.append(y)
-
-    # filter out stations outside the radius
-    def distFilter(self, radius):
-        flist = self.distList
-        length = len(flist)
-        for x in range(length):
-            if flist[x].dist > radius:
-                del flist[x:length]
-                break
-        return flist
-
-    def printList(self):
-        for x in range(len(self.distList)):
-            print('Station: ' + self.distList[x].station.id, 'Distance: ' + str(self.distList[x].dist), 'Priority: ' + str(self.distList[x].priority))
-
-    def distlist_has_rr_user(self):
-        check = False
-        for x in self.distList:
-            if x.station.has_rr_user():
-               check = True
-        return check
 
     def changePriority(self, p):  # changes priority of all pairings to distance priority
         if p == 0:      # 0 = default    diff/dist

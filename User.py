@@ -78,16 +78,6 @@ def assign_user(user, stations, dest):  # creates a user with a given dest
     # print(self)
     user.end.inc.append(user)
 
-def create_rand_users(stations, amount):
-    users = []
-    # print("Creating", amount, 'users.')
-    for x in range(amount):
-        id = 'U' + str(x + 1)
-        # create user
-        u = User(id=id)
-        u.createRandUser(stations)
-        users.append(u)
-    return users
 
 def load_users_time(stations, time_interval):
     users = []
@@ -129,8 +119,6 @@ def dist_users(variance, stations):  # create users and distribute them based on
     return users
 
 
-
-
 def total_RR_distance(users):  # gets the total distance users were rerouted from their original destinations
     total = 0
     for x in users:
@@ -144,18 +132,4 @@ def rand_date(df): # creates a random date between the start and end date
     diff = int((end - start).total_seconds()) # diff of seconds between first and last date
     sec = random.randint(0, diff) # creates random int in this diff and then adds to start time
     return start + timedelta(seconds=sec)
-
-
-def print_users(users):
-    for x in users:
-        print(x.id)
-
-
-def reset_users(users):  # resets the users so we can run the algorithm fresh
-    for x in users:
-        if x.rr_end is not None:  # resets as long as user was rerouted
-            x.rr_end.inc.remove(x)  # remove user from rerouted stations incoming
-            x.rr_end = None  # reset users rerouted station
-            x.end.inc.append(x)  # add user back to original stations incoming
-            x.rerouted = False
 

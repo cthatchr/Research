@@ -96,27 +96,13 @@ class Station:
             return False
 
 
-# creates n amount of stations around a target coordinate
-def create_rand_stations(lat, lon, radius, amount, distribution_type=4, max=10):
-    stations = []
-    for x in range(amount):
-        id = 'S' + str(x+1)
-        # gives a random current amount between 0 and max (can be changed)
-        curr = random.randint(0, max-1)
-        """"# gives a random target amount between 3 and max-2 (can be changed)
-        targ = random.randint(3, max)"""
-        # create Station
-        s = Station(id=id, target=curr, curr=curr)  # target = curr
-        s.rand_coord(lat, lon, radius)
-        stations.append(s)
-    return stations
-
 def load_df():
     with open('indego_stationdata.json') as d:  # reads json data from file
         data = json.load(d)
     df = pd.DataFrame(data['features'])  # turns json data into Dataframe to work off of
     dfd = json_normalize(df['properties'])  # normalizes json data
     return dfd
+
 
 def load_stations():  # loads stations from json data
     stations = []
@@ -136,38 +122,7 @@ def load_stations():  # loads stations from json data
 
 
 def filter_stations(stations, filter, target):
-    k = 0
-    """for x in stations:
-        k += 1
-        loc = (x.lat, x.lon)
-        dist = distance.distance(loc, target).meters
-        if dist > filter:
-            print('X')
-        print(k, dist)
-    k=0"""
     stations[:] = [y for y in stations if distance.distance((y.lat, y.lon), target).meters < filter]
-    """for x in stations:
-        k += 1
-        loc = (x.lat, x.lon)
-        dist = distance.distance(loc, target).meters
-        print(k, dist)"""
-
-
-def is_surplus_and_has_rr_user(s):  # checks if a station that has a surplus
-    if s.is_surplus_or_deficit is 's' and s.has_rr_user():
-        return True
-    else:
-        return False
-
-
-def set_stations_t_distr(stations, target_distr_type=4):  # sets stations target amt given distribution type
-    for x in stations:
-        set_target_distribution(x, target_distr_type)
-
-
-def set_stations_c_distr(stations, curr_distr_type=4):  # sets stations current amt given distribution type
-    for x in stations:
-        set_curr_distribution(x, curr_distr_type)
 
 
 def stations_has_rr_user(stations):  # checks if ANY of the stations have a reroutable user, true if they do
@@ -188,15 +143,67 @@ def get_station_by_id(stations, id):
 def sd_dist(amount, stations, type = 'U'):
     amt = len(stations)
     users = amount  # the amount of users we plan the create and reroute
+    sur_total, def_total, sur_ex, def_ex = 0, 0, 0, 0
+    def_amt, sur_amt = users, users
 
     if type is 'U':  # uniform
         s = np.random.uniform(-1, 1, size=amt)
-    elif type is 'E':  # exponential
-        s = np.random.exponential(-1, 1, size=amt)
     elif type is 'N':  # normal
-        s = np.random.normal(-1, 1, size=amt)
-    elif type is 'R':  # random
-        s = 2 * (np.random.random_sample(size=amt) - 0.5)
+        s = np.random.normal(0, (users / amt) * 1.5, size=amt)
+    elif type is 'R':
+        s = 2 * ((np.random.random_sample(size=amt) - 0.5))
+    elif type is 'E':
+        y = np.random.uniform(-1, 1, size=amt)
+        pos = 0
+        for i in y:
+            if i > 0:
+                pos += 1
+        s1 = np.random.exponential(size=pos)
+        s2 = -(np.random.exponential(size=(amt - pos)))
+        s = np.append(s1, s2)
+        random.shuffle(s)
+
+    totals = sd_totals(s)
+    sur_total = totals[0]
+    def_total = totals[1]
+
+    v = np.zeros(amt)  # normalize distribution
+    for x in range(len(s)):
+        if s[x] > 0:  # if +
+            v[x] = (s[x] / sur_total)*users
+        elif s[x] < 0:  # if -
+            v[x] = -(s[x] / def_total)*users
+
+    for x in range(len(v)):  # round each float to an int
+        z = v[x]
+        if z > 0:
+            v[x] = round(v[x])
+            sur_amt -= v[x]
+        elif z < 0:
+            v[x] = round(v[x])
+            def_amt += v[x]
+
+    while (def_amt > 0) or (sur_amt > 0):  # while there is still variances to assign
+        r = np.random.randint(0, amt)
+        if (sur_amt > 0) and (v[r] > 0):
+            v[r] += 1
+            sur_amt -= 1
+        if (def_amt > 0) and (v[r] < 0):
+            v[r] -= 1
+            def_amt -= 1
+
+    while (def_amt < 0) or (sur_amt < 0):  # while were to many variances assigned
+        r = np.random.randint(0, amt)
+        if (sur_amt < 0) and (v[r] > 0):
+            v[r] -= 1
+            sur_amt += 1
+        if (def_amt < 0) and (v[r] < 0):
+            v[r] += 1
+            def_amt += 1
+    return v.astype(int)
+
+
+def sd_totals(s):
     sur_total = 0
     def_total = 0
     for x in s:
@@ -204,34 +211,7 @@ def sd_dist(amount, stations, type = 'U'):
             sur_total += x
         if x < 0:
             def_total += x
-
-    variance = np.zeros(amt)  # normalize distribution
-    for x in range(len(s)):
-        if s[x] > 0:  # if +
-            variance[x] = (s[x] / sur_total)*users
-        if s[x] < 0:  # if -
-            variance[x] = -(s[x] / def_total)*users
-
-    def_amt = users
-    sur_amt = users
-    v = np.zeros(len(stations), dtype=int)
-    while (def_amt > 0) or (sur_amt > 0):  # while there is still variances to assign
-        for x in range(len(variance)):
-            n = random.uniform(0, 1)
-            if (variance[x] > 0) and (sur_amt > 0):  # if + and has amt to distribute
-                if n < variance[x]:
-                    v[x] += 1
-                    sur_amt -= 1
-                    # variance[x] -= n
-            elif (variance[x] < 0) and (def_amt > 0):  # if - and has amt to distribute
-                if n < -(variance[x]):
-                    v[x] -= 1
-                    def_amt -= 1
-                    # variance[x] += n
-
-    print(v)
-    print(sum(v))
-    return v
+    return [sur_total, def_total]
 
 
 def create_sd_dist_old(amount, stations):  # returns an array which represents each stations surplus and deficit
@@ -262,42 +242,6 @@ def create_sd_dist_old(amount, stations):  # returns an array which represents e
             v[num] -= 1
             def_amt -= 1
     return v
-
-
-def set_target_distribution(station, dist_type):  # sets stations target amount; low, medium, high, or random
-    max = station.max
-    half = int(round(max/2))
-    if dist_type is 1:  # low 0-half
-        station.target = random.randint(0, half)
-
-    elif dist_type is 2:  # med 1/4-3/4
-        lower = int(round(half/2))
-        upper = int(round(half + lower))
-        station.target = random.randint(lower, upper)
-
-    elif dist_type is 3:  # high half-max
-        station.target = random.randint(half, max)
-
-    elif dist_type is 4:  # random 0-max
-        station.target = random.randint(0, max)
-
-
-def set_curr_distribution(station, dist_type):  # sets stations current amount; low, medium, high, or random
-    max = station.max
-    half = int(round(max/2))
-    if dist_type is 1:  # low 0-half
-        station.curr = random.randint(0, half)
-
-    elif dist_type is 2:  # med 1/4-3/4
-        lower = int(round(half/2))
-        upper = int(round(half + lower))
-        station.curr = random.randint(lower, upper)
-
-    elif dist_type is 3:  # high half-max
-        station.curr = random.randint(half, max)
-
-    elif dist_type is 4:  # random 0-max
-        station.curr = random.randint(0, max)
 
 
 def delete_inc(stations):  # deletes incoming users from stations

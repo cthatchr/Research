@@ -4,6 +4,7 @@ from gmplot import gmplot
 import plotly.express as px
 import plotly.graph_objects as go
 
+
 def station_map_gmp(stations):
     # Place map
     gmap = gmplot.GoogleMapPlotter(37.766956, -122.438481, 13)
@@ -56,6 +57,7 @@ def station_map():
     '''color="peak_hour", size="car_hours",
                   color_continuous_scale=px.colors.cyclical.IceFire, size_max=15, zoom=10)'''
 
+
 def station_map_scale():
     df = load_df()
 
@@ -63,7 +65,7 @@ def station_map_scale():
     fig = px.scatter_mapbox(df, lat="latitude", lon="longitude", hover_name="name",
                             hover_data=["totalDocks", "docksAvailable"],
                             color="variance", color_continuous_scale=px.colors.cyclical.IceFire,
-                            size='totalDocks ', zoom=10)
+                            size='totalDocks', zoom=10)
 
     fig.update_layout(mapbox_style="carto-positron",
                       mapbox_zoom=12, mapbox_center={"lat": 39.953555, "lon": -75.164042})
@@ -71,6 +73,7 @@ def station_map_scale():
     fig.show()
     '''color="peak_hour", size="car_hours",
                   color_continuous_scale=px.colors.cyclical.IceFire, size_max=15, zoom=10)'''
+
 
 def test_distribution(v):
     bins = np.arange(min(v), max(v) + 2) - 0.5
@@ -81,42 +84,16 @@ def test_distribution(v):
     print(np.arange(min(v), max(v) + 1))
     plt.show()
 
-def compare_lineplot(index, sum, avg, dist):
+
+def compare_dist(index, dist, dist_const):
     # create a line plot given a set of data
     plt.figure()
-    plt.suptitle('Stock Difference After Algorithm', fontsize=16)
     plt.subplots_adjust(hspace=1)
-    # plot sums
+    # plot constraint
     plt.subplot(211)
-    plt.title('Total')
+    plt.title('No constraint')
     plt.xlabel('Users Rerouted')
-    plt.ylabel('Stock Difference')
-    plt.plot(index, sum[0], label='Default')
-    plt.plot(index, sum[1], label='Distance^2')
-    plt.plot(index, sum[2], label='Difference^2')
-    plt.plot(index, sum[3], label='Only Distance')
-    plt.plot(index, sum[4], label='Only Difference')
-    plt.plot(index, sum[5], label='Random')
-    plt.locator_params(axis='y', nbins=5)
-    # plot avgs
-    plt.subplot(212)
-    plt.title('Average')
-    plt.xlabel('Users Rerouted')
-    plt.ylabel('Stock Difference')
-    plt.plot(index, avg[0], label='Default')
-    plt.plot(index, avg[1], label='Distance^2')
-    plt.plot(index, avg[2], label='Difference^2')
-    plt.plot(index, avg[3], label='Only Distance')
-    plt.plot(index, avg[4], label='Only Difference')
-    plt.plot(index, avg[5], label='Random')
-    plt.locator_params(axis='y', nbins=5)
-    plt.legend()
-    plt.figure()
-
-    # user distance moved
-    plt.title('Distance Users Rerouted')
-    plt.xlabel('Users Rerouted')
-    plt.ylabel('Distance(Meters)')
+    plt.ylabel('Distance(meters)')
     plt.plot(index, dist[0], label='Diff/Dist')
     plt.plot(index, dist[1], label='Diff/Dist^2')
     plt.plot(index, dist[2], label='Diff^2/Dist')
@@ -124,7 +101,21 @@ def compare_lineplot(index, sum, avg, dist):
     plt.plot(index, dist[4], label='Only Diff')
     plt.plot(index, dist[5], label='Random')
     plt.locator_params(axis='y', nbins=5)
+    # plot non constraint
+    plt.subplot(212)
+    plt.title('Constraint')
+    plt.xlabel('Users Rerouted')
+    plt.ylabel('Distance(meters)')
+    plt.plot(index, dist_const[0], label='Diff/Dist')
+    plt.plot(index, dist_const[1], label='Diff/Dist^2')
+    plt.plot(index, dist_const[2], label='Diff^2/Dist')
+    plt.plot(index, dist_const[3], label='Only Dist')
+    plt.plot(index, dist_const[4], label='Only Diff')
+    plt.plot(index, dist_const[5], label='Random')
+    plt.locator_params(axis='y', nbins=5)
     plt.legend()
+    plt.figure()
+
     plt.show()
 
 
@@ -142,4 +133,4 @@ def create_dist_plot(index, dist):
     plt.plot(index, dist[5], label='Random')
     plt.locator_params(axis='y', nbins=5)
     plt.legend()
-    plt.show(block=False)
+    plt.show()

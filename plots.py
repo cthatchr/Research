@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from Completion import *
 from gmplot import gmplot
+import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 
@@ -85,52 +86,75 @@ def test_distribution(v):
     plt.show()
 
 
-def compare_dist(index, dist, dist_const):
+def compare_dist(index, dist, dist_const, mcf=None, mcf_const=None, name=None):
     # create a line plot given a set of data
     plt.figure()
     plt.subplots_adjust(hspace=1)
-    # plot constraint
+    # plot non constraint
     plt.subplot(211)
     plt.title('No constraint')
     plt.xlabel('Users Rerouted')
     plt.ylabel('Distance(meters)')
-    plt.plot(index, dist[0], label='Diff/Dist')
-    plt.plot(index, dist[1], label='Diff/Dist^2')
-    plt.plot(index, dist[2], label='Diff^2/Dist')
-    plt.plot(index, dist[3], label='Only Dist')
-    plt.plot(index, dist[4], label='Only Diff')
-    plt.plot(index, dist[5], label='Random')
+    # plt.plot(index, dist[0], label='Diff/Dist')
+    plt.plot(index, dist[0], label='Diff/Dist^2')
+    plt.plot(index, dist[1], label='Diff^2/Dist')
+    plt.plot(index, dist[2], label='Only Dist')
+    # plt.plot(index, dist[4], label='Only Diff')
+    plt.plot(index, dist[3], label='Random')
+    if mcf is not None:
+        plt.axhline(y=mcf_const, xmin=0.90, ls='dashed')
+
     plt.locator_params(axis='y', nbins=5)
-    # plot non constraint
+    # plot constraint
     plt.subplot(212)
     plt.title('Constraint')
     plt.xlabel('Users Rerouted')
     plt.ylabel('Distance(meters)')
-    plt.plot(index, dist_const[0], label='Diff/Dist')
-    plt.plot(index, dist_const[1], label='Diff/Dist^2')
-    plt.plot(index, dist_const[2], label='Diff^2/Dist')
-    plt.plot(index, dist_const[3], label='Only Dist')
-    plt.plot(index, dist_const[4], label='Only Diff')
-    plt.plot(index, dist_const[5], label='Random')
+    # plt.plot(index, dist_const[0], label='Diff/Dist')
+    plt.plot(index, dist_const[0], label='Diff/Dist^2')
+    plt.plot(index, dist_const[1], label='Diff^2/Dist')
+    plt.plot(index, dist_const[2], label='Only Dist')
+    # plt.plot(index, dist_const[4], label='Only Diff')
+    plt.plot(index, dist_const[3], label='Random')
+    if mcf_const is not None:
+        plt.axhline(y=mcf, xmin=0.90, ls='dashed')
     plt.locator_params(axis='y', nbins=5)
     plt.legend()
-    plt.figure()
-
+    if name:
+        name = 'Both'+'U'+str(name[0])+'R'+str(name[1])+str(name[2])+'Const'+str(name[3][1])+'.png'
+        plt.savefig(name)
     plt.show()
 
 
-def create_dist_plot(index, dist):
+def create_dist_plot(index, dist, mcf=None, name=None):
     # user distance moved
     plt.figure()
     plt.title('Distance Users Rerouted')
     plt.xlabel('Users Rerouted')
     plt.ylabel('Distance(Meters)')
-    plt.plot(index, dist[0], label='Diff/Dist')
-    plt.plot(index, dist[1], label='Diff/Dist^2')
-    plt.plot(index, dist[2], label='Diff^2/Dist')
-    plt.plot(index, dist[3], label='Only Dist')
-    plt.plot(index, dist[4], label='Only Diff')
-    plt.plot(index, dist[5], label='Random')
+    # plt.plot(index, dist[0], label='Diff/Dist')
+    plt.plot(index, dist[0], label='Diff/Dist^2')
+    plt.plot(index, dist[1], label='Diff^2/Dist')
+    plt.plot(index, dist[2], label='Only Dist')
+    # plt.plot(index, dist[4], label='Only Diff')
+    plt.plot(index, dist[3], label='Random')
+    if mcf is not None:
+        plt.axhline(y=mcf, xmin=0.90)
     plt.locator_params(axis='y', nbins=5)
     plt.legend()
+    if name:
+        name = 'U'+str(name[0])+'R'+str(name[1])+str(name[2])+'Const'+str(name[3][1])+'.png'
+        plt.savefig(name)
+    plt.show()
+
+def compare_users_bar(index, greedy, greedy_const, mcf, mcf_const):
+    x = np.arange(index)
+    width = 0.25  # the width of the bars
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(x - width / 2, greedy, width, label='greedy nc')
+    rects2 = ax.bar(x - width / 4, greedy_const, width, label='greedy c')
+    rects3 = ax.bar(x - width / 2, mcf, label='mcf nc')
+    rects4 = ax.bar(x + width / 2, mcf_const, width, label='mcf c')
+    ax.set_ylabel('Distance(meters)')
+    ax.set_title('Users Rerouted per test')
     plt.show()

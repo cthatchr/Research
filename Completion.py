@@ -109,7 +109,7 @@ def run(settings, type):
                 mcf_stats[j] = stats
                 j += 1
             delete_inc(data[0])
-        print(mcf_stats)
+        # print(mcf_stats)
         return mcf_stats
 
     elif type is 'B':  # if running both
@@ -121,9 +121,10 @@ def run(settings, type):
                 mcf_stats[j] = stats_m  # returns [stats, const_stats]
                 greedy_stats[j] = stats_g  # returns [stats, const_stats]
                 j += 1
+                print('Completed run', j)
             delete_inc(data[0])
-        print('MCF', mcf_stats)
-        print('Greedy', greedy_stats)
+        # print('MCF', mcf_stats)
+        # print('Greedy', greedy_stats)
         return [mcf_stats, greedy_stats]
 
 
@@ -170,8 +171,8 @@ def run_greedy(settings, stations, users):
 
     failed = False
     amt_users = settings[0] + 1
-    stats_const = np.array([[0] * amt_users] * 6)
-    stats = np.array([[0] * amt_users] * 6)
+    stats_const = np.array([[0] * amt_users] * 4)
+    stats = np.array([[0] * amt_users] * 4)
 
     if settings[3][0] is False:  # if running eithe with or without constraint
 
@@ -180,7 +181,7 @@ def run_greedy(settings, stations, users):
         else:
             constraint = get_average_distance(stations) * settings[3][1]
 
-        for x in range(6):  # runs algorithm with different prio, starts fresh each time
+        for x in range(4):  # runs algorithm with different prio, starts fresh each time
             temp = run_priority(stations, users, x,
                                 constraint)  # run alg and gather data for priority x with constraint
 
@@ -201,11 +202,10 @@ def run_greedy(settings, stations, users):
 
     elif settings[3][0] is True:
         constraint = get_average_distance(stations) * settings[3][1]
-        for x in range(6):  # runs algorithm with different prio, starts fresh each time
+        for x in range(4):  # runs algorithm with different prio, starts fresh each time
             temp = run_priority(stations, users, x, False)  # run alg and gather data for priority x with constraint
             reset_instance(users, stations)  # reset users back to original position
-            temp_const = run_priority(stations, users, x,
-                                constraint)  # run alg and gather data for priority x with constraint
+            temp_const = run_priority(stations, users, x, constraint)  # priority x with constraint
 
             if temp_const is 0:  # if instance fails stop and make a new one
                 print('Failed on priority #', x, '. Creating new instance')
@@ -213,7 +213,7 @@ def run_greedy(settings, stations, users):
                 break
             else:  # else keep going
                 stats[x] = np.add(stats[x], temp)
-                stats_const[x] = np.add(stats[x], temp)
+                stats_const[x] = np.add(stats_const[x], temp_const)
                 reset_instance(users, stations)  # reset users back to original positions
                 failed = False
 
@@ -249,7 +249,7 @@ def greedy_average(stats):
         total = np.add(total, stats[x])
 
     avg = total/len(stats)
-    print(avg)
+    # print(avg)
     return avg
 
 
@@ -261,12 +261,14 @@ def greedy_lowest_dist(stats):
             priority = x
     return [best, priority]
 
+
 def mcf_average(stats):
     total = sum(stats)
 
     avg = total/len(stats)
-    print(avg)
+    # print(avg)
     return avg
+
 
 def reset_instance(users, stations):  # resets the users so we can run the algorithm fresh
     for x in users:

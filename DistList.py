@@ -36,6 +36,22 @@ class DistList:
     def changePriority(self, p):  # changes priority of all pairings to distance priority
         if p == 0:      # 0 = default    diff/dist
             for x in self.distList:
+                x.distance_priority()
+        elif p == 1:    # 1 = dist prio  diff/dist^2
+            for x in self.distList:
+                x.difference_priority()
+        elif p == 2:    # 2 = diff prio  diff^2/dist
+            for x in self.distList:
+                x.only_distance()
+        elif p == 3:     # 3 = only dist  dist
+            rand = list(range(0, len(self.distList)))
+            random.shuffle(rand)
+            for x in self.distList:
+                x.priority = rand.pop()
+
+    def changePriority_deprecated(self, p):  # changes priority of all pairings to distance priority
+        if p == 0:      # 0 = default    diff/dist
+            for x in self.distList:
                 x.default_priority()
         elif p == 1:    # 1 = dist prio  diff/dist^2
             for x in self.distList:

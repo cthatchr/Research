@@ -7,18 +7,18 @@ class StationDW:
 
     def default_priority(self):
         s = self.station
-        self.priority = s.getdiff()/self.dist
+        self.priority = s.getdiff(absval=True)/self.dist
 
     def distance_priority(self):  # prioritizes distance when calculating priority, dist value is to the power of 2
         s = self.station
-        self.priority = s.getdiff() / pow(self.dist, 2)
+        self.priority = s.getdiff(absval=True) / pow(self.dist, 2)
 
     def difference_priority(self):  # prioritizes difference when calculating priority, diff to the power of 2
         s = self.station
-        self.priority = pow(s.getdiff(), 2) / self.dist
+        self.priority = pow(s.getdiff(absval=True), 2) / self.dist
 
-        if s.is_surplus_or_deficit is -1:  # if the station has a deficit set the priority to negative
-            self.priority = -self.priority
+        '''if s.is_surplus_or_deficit is -1:  # if the station has a deficit set the priority to negative
+            self.priority = -self.priority'''
 
     def only_distance(self):  # priority becomes the distance between stations, lowest
         self.priority = self.dist

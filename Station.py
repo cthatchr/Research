@@ -101,6 +101,25 @@ def load_df():
         data = json.load(d)
     df = pd.DataFrame(data['features'])  # turns json data into Dataframe to work off of
     dfd = json_normalize(df['properties'])  # normalizes json data
+    for index, row in dfd.iterrows():  # loops through each record of station
+        # print(row['kioskId'])
+        if row['kioskId'] in [3183, 3186, 3181, 3188, 3117, 3111]:  # filtering
+            dfd.drop(index, inplace=True)
+    return dfd
+
+def load_plot_stations():
+    with open('indego_stationdata.json') as d:  # reads json data from file
+        data = json.load(d)
+    df = pd.DataFrame(data['features'])  # turns json data into Dataframe to work off of
+    dfd = json_normalize(df['properties'])  # normalizes json data
+
+    stations = load_stations()
+    filter_stations(stations, 2000, (39.953555, -75.164042))
+
+    for index, row in dfd.iterrows():  # loops through each record of station
+        # print(row['kioskId'])
+        if row['kioskId'] not in [s.id for s in stations]:  # filtering
+            dfd.drop(index, inplace=True)
     return dfd
 
 
@@ -117,7 +136,9 @@ def load_stations():  # loads stations from json data
                     max=row['properties.totalDocks'],
                     curr=row['properties.bikesAvailable'],
                     target=row['properties.bikesAvailable'])
-        stations.append(s)
+        if s.id not in [3183, 3186, 3181, 3188, 3117, 3111]: # filtering
+            stations.append(s)
+
     return stations
 
 
@@ -185,10 +206,10 @@ def sd_dist(amount, stations, type = 'U'):
 
     while (def_amt > 0) or (sur_amt > 0):  # while there is still variances to assign
         r = np.random.randint(0, amt)
-        if (sur_amt > 0) and (v[r] > 0):
+        if (sur_amt > 0) and (v[r] >= 0):
             v[r] += 1
             sur_amt -= 1
-        if (def_amt > 0) and (v[r] < 0):
+        if (def_amt > 0) and (v[r] <= 0):
             v[r] -= 1
             def_amt -= 1
 
@@ -251,6 +272,15 @@ def delete_inc(stations):  # deletes incoming users from stations
 
 def get_average_distance(stations):
     distance_sum = 0
+    for x in range(len(stations)):
+        for y in range(1,len(stations)):
+                distance_sum += distance.distance((stations[x].lat, stations[x].lon), (stations[y].lat, stations[y].lon)).meters
+    average = distance_sum/(len(stations)*(len(stations)-1))
+    return average
+
+'''
+def get_average_distance(stations):
+    distance_sum = 0
     for x in stations:
         dl = DistList(0)
         dl.fill_distance(stations, x)
@@ -258,7 +288,7 @@ def get_average_distance(stations):
             distance_sum += y.dist
     average = distance_sum/(len(stations)*(len(stations)-1))
     return average
-
+'''
 
 def get_distance(st1, st2):
     loc1 = (st1.lat, st1.lon)

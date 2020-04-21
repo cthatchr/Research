@@ -11,13 +11,15 @@ class DistList:
         self.priority_used = priority
 
     # fills with a list of stations and their distance + priority to the target station
-    def fill(self, stations, target):
+    def fill(self, stations, target, constraint):
         length = len(stations)
         targetLoc = (target.lat, target.lon)
         for x in range(length):  # creates a list excluding the target station
-            if stations[x] != target:
-                loc = (stations[x].lat, stations[x].lon)
-                dist = distance.distance(loc, targetLoc).meters
+            loc = (stations[x].lat, stations[x].lon)
+            dist = distance.distance(loc, targetLoc).meters
+            if (stations[x] != target) and (dist < constraint):
+                # loc = (stations[x].lat, stations[x].lon)
+                # dist = distance.distance(loc, targetLoc).kilometers
                 y = StationDW(stations[x], dist)
                 self.distList.append(y)
         self.changePriority(self.priority_used)  # uses priority specified
@@ -40,10 +42,10 @@ class DistList:
         elif p == 1:    # 1 = dist prio  diff/dist^2
             for x in self.distList:
                 x.difference_priority()
-        elif p == 2:    # 2 = diff prio  diff^2/dist
+        elif p == 2:    # 2 = only dist  dist
             for x in self.distList:
                 x.only_distance()
-        elif p == 3:     # 3 = only dist  dist
+        elif p == 3:     # 3 = Random
             rand = list(range(0, len(self.distList)))
             random.shuffle(rand)
             for x in self.distList:
@@ -70,3 +72,7 @@ class DistList:
             random.shuffle(rand)
             for x in self.distList:
                 x.priority = rand.pop()
+
+    def print(self):
+        for x in self.distList:
+            print(x.dist)
